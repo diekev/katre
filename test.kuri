@@ -51,7 +51,7 @@ principale :: fonc ()
 
     pour chemins_fichiers {
         si exécute_commande_externe("./katre", "-s", it, ">", chemin_tmp) {
-            compare_fichiers(it, chemin_tmp, chemins_sorties[indice_it], vrai, *tests_échouants)
+            compare_fichiers(it, chemins_sorties[indice_it], chemin_tmp, vrai, *tests_échouants)
         }
         sinon {
             test_échouant := tableau_ajoute_élément(*tests_échouants)
@@ -64,7 +64,7 @@ principale :: fonc ()
             diffère déloge(programme)
 
             si exécute_commande_externe(programme, ">", chemin_tmp) {
-                compare_fichiers(it, chemin_tmp, chemins_sorties[indice_it], faux, *tests_échouants)
+                compare_fichiers(it, chemins_sorties[indice_it], chemin_tmp, faux, *tests_échouants)
             }
             sinon {
                 test_échouant := tableau_ajoute_élément(*tests_échouants)
