@@ -171,7 +171,7 @@ Compilatrice :: struct {
 }
 
 commentaires_ligne_singulière := ["//"]
-ponctuations := ["+", "-", "*", "/", ".", ",", "=", ">", "<", ">=", "<=", "<<", ">>", "&", "|", "^"]
+ponctuations := ["+", "-", "*", "/", "%", ".", ",", "=", ">", "<", ">=", "<=", "<<", ">>", "&", "|", "^"]
 mots_clés := ["dup", "si", "sinon", "fin", "tantque", "fais", "mem", "cliche", "lâche", "dup2", "appelsys1", "appelsys2", "appelsys3", "permute", "enjambe", "macro", "inclus"]
 
 ouvre_fichier :: fonc (compilatrice: *Compilatrice, chemin: chaine) -> *FichierSource
@@ -596,6 +596,9 @@ parse_macro :: fonc (compilatrice: *Compilatrice, programme: *Programme, lexeuse
     sinon si est_ponctuation(lexème, "/") {
         émets(insts, Divise, lexème)
     }
+    sinon si est_ponctuation(lexème, "%") {
+        émets(insts, Modulo, lexème)
+    }
     sinon si est_mot_clé(lexème, "cliche") {
         émets(insts, Cliche, lexème)
     }
@@ -791,6 +794,11 @@ Multiplie :: struct {
 }
 
 Divise :: struct {
+    empl base: Instruction
+    genre = #type_de_cette_structure
+}
+
+Modulo :: struct {
     empl base: Instruction
     genre = #type_de_cette_structure
 }
@@ -1156,6 +1164,11 @@ simule_instructions :: fonc (simulatrice: *Simulatrice, insts: []octet)
                 b := dépile(simulatrice)
                 empile(simulatrice, b / a)
             }
+            Modulo {
+                a := dépile(simulatrice)
+                b := dépile(simulatrice)
+                empile(simulatrice, b % a)
+            }
             Égal {
                 a := dépile(simulatrice)
                 b := dépile(simulatrice)
@@ -1444,6 +1457,13 @@ compile_programme :: fonc (asm: *AssembleuseNASM, empl programme: *Programme)
                 pop(asm, "rax")
                 idiv(asm, "rbx")
                 push(asm, "rax")
+            }
+            Modulo {
+                xor(asm, "rdx", "rdx")
+                pop(asm, "rbx")
+                pop(asm, "rax")
+                idiv(asm, "rbx")
+                push(asm, "rdx")
             }
             Égal {
                 xor(asm, "rcx", "rcx")

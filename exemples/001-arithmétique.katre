@@ -4,3 +4,9 @@
 10 20 = cliche
 3 4 + 5 * cliche
 3 dup * cliche
+
+// Division
+15 3 / cliche
+
+// Modulo
+15 3 % cliche

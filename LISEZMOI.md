@@ -35,11 +35,17 @@ a = dépile()
 b = dépile()
 empile(b * a)
 ```
-- `/` - place le résultat de la division en haut de la pile
+- `/` - place le quotient de la division en haut de la pile
 ```
 a = dépile()
 b = dépile()
 empile(b / a)
+```
+- `%` - place le reste de la division en haut de la pile
+```
+a = dépile()
+b = dépile()
+empile(b % a)
 ```
 
 ### Binaires
