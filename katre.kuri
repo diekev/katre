@@ -171,6 +171,7 @@ Compilatrice :: struct {
 }
 
 commentaires_ligne_singulière := ["//"]
+commentaires_multi_lignes := [ ["/*", "*/"] ]
 ponctuations := ["+", "-", "*", "/", "%", ".", ",", "=", ">", "<", ">=", "<=", "<<", ">>", "&", "|", "^"]
 mots_clés := ["dup", "si", "sinon", "fin", "tantque", "fais", "mem", "cliche", "lâche", "dup2", "appelsys1", "appelsys2", "appelsys3", "permute", "enjambe", "macro", "inclus"]
 
@@ -186,6 +187,7 @@ ouvre_fichier :: fonc (compilatrice: *Compilatrice, chemin: chaine) -> *FichierS
     résultat.contenu = contenu
 
     résultat.lexeuse.commentaires_ligne_singulière = commentaires_ligne_singulière
+    résultat.lexeuse.commentaires_multi_lignes = commentaires_multi_lignes
     résultat.lexeuse.ponctuations = ponctuations
     résultat.lexeuse.mots_clés = mots_clés
     résultat.lexeuse.apostrophe_est_caractère_constant = vrai
