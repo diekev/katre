@@ -184,10 +184,11 @@ ouvre_fichier :: fonc (compilatrice: *Compilatrice, chemin: chaine) -> *FichierS
     résultat := loge(FichierSource)
     résultat.chemin = chemin
     résultat.contenu = contenu
-    
+
     résultat.lexeuse.commentaires_ligne_singulière = commentaires_ligne_singulière
     résultat.lexeuse.ponctuations = ponctuations
     résultat.lexeuse.mots_clés = mots_clés
+    résultat.lexeuse.apostrophe_est_caractère_constant = vrai
 
     initialise_lexeuse_pour_texte(*résultat.lexeuse, contenu)
 
@@ -543,6 +544,45 @@ parse_macro :: fonc (compilatrice: *Compilatrice, programme: *Programme, lexeuse
     sinon si lexème.type == TypeLexème.ChaineLittérale {
         chaine_constante := ajoute_chaine(programme, donne_texte(lexème))
         émets(insts, ChaineLittérale, lexème, chaine_constante)
+    }
+    sinon si lexème.type == TypeLexème.CaractèreConstant {
+        texte := donne_texte(lexème)
+        valeur: z64
+        si texte.taille == 1 {
+            valeur = texte[0]
+        }
+        sinon si texte.taille == 2 {
+            si texte[0] == '\\' {
+                c := texte[1]
+                // À FAIRE : déduplique avec la version pour les chaines
+                si c == 'n' {
+                    valeur = '\n'
+                }
+                sinon si c == 't' {
+                    valeur = '\t'
+                }
+                sinon si c == '\'' {
+                    valeur = '\''
+                }
+                sinon si c == 'f' {
+                    valeur = '\f'
+                }
+                sinon si c == 'v' {
+                    valeur = '\v'
+                }
+                sinon {
+                    valeur = c
+                }
+            }
+            sinon {
+                rapporte_erreur(compilatrice, lexème, "constante de caractère invalide")
+            }
+        }
+        sinon {
+            rapporte_erreur(compilatrice, lexème, "constante de caractère invalide")
+        }
+
+        émets(insts, NombreEntier, lexème, valeur)
     }
     sinon si est_ponctuation(lexème, "+") {
         émets(insts, Ajoute, lexème)
