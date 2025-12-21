@@ -1,3 +1,5 @@
+inclus "standarde.katre"
+
 34 35 + cliche
 500 80 - cliche
 10 20 + cliche
@@ -6,7 +8,7 @@
 3 dup * cliche
 
 // Division
-15 3 / cliche
+15 3 div cliche
 
 // Modulo
-15 3 % cliche
+15 3 mod cliche

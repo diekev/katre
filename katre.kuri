@@ -172,8 +172,8 @@ Compilatrice :: struct {
 
 commentaires_ligne_singulière := ["//"]
 commentaires_multi_lignes := [ ["/*", "*/"] ]
-ponctuations := ["+", "-", "*", "/", "%", ".", ",", "=", ">", "<", ">=", "<=", "<<", ">>", "&", "|", "^"]
-mots_clés := ["dup", "si", "sinon", "fin", "tantque", "fais", "mem", "cliche", "lâche", "dup2", "appelsys1", "appelsys2", "appelsys3", "permute", "enjambe", "macro", "inclus"]
+ponctuations := ["+", "-", "*", ".", ",", "=", ">", "<", ">=", "<=", "<<", ">>", "&", "|", "^"]
+mots_clés := ["dup", "si", "sinon", "fin", "tantque", "fais", "mem", "cliche", "lâche", "dup2", "appelsys1", "appelsys2", "appelsys3", "permute", "enjambe", "macro", "inclus", "divmod"]
 
 ouvre_fichier :: fonc (compilatrice: *Compilatrice, chemin: chaine) -> *FichierSource
 {
@@ -595,11 +595,8 @@ parse_macro :: fonc (compilatrice: *Compilatrice, programme: *Programme, lexeuse
     sinon si est_ponctuation(lexème, "*") {
         émets(insts, Multiplie, lexème)
     }
-    sinon si est_ponctuation(lexème, "/") {
-        émets(insts, Divise, lexème)
-    }
-    sinon si est_ponctuation(lexème, "%") {
-        émets(insts, Modulo, lexème)
+    sinon si est_mot_clé(lexème, "divmod") {
+        émets(insts, DivMod, lexème)
     }
     sinon si est_mot_clé(lexème, "cliche") {
         émets(insts, Cliche, lexème)
@@ -795,12 +792,7 @@ Multiplie :: struct {
     genre = #type_de_cette_structure
 }
 
-Divise :: struct {
-    empl base: Instruction
-    genre = #type_de_cette_structure
-}
-
-Modulo :: struct {
+DivMod :: struct {
     empl base: Instruction
     genre = #type_de_cette_structure
 }
@@ -1161,14 +1153,10 @@ simule_instructions :: fonc (simulatrice: *Simulatrice, insts: []octet)
                 b := dépile(simulatrice)
                 empile(simulatrice, b * a)
             }
-            Divise {
+            DivMod {
                 a := dépile(simulatrice)
                 b := dépile(simulatrice)
                 empile(simulatrice, b / a)
-            }
-            Modulo {
-                a := dépile(simulatrice)
-                b := dépile(simulatrice)
                 empile(simulatrice, b % a)
             }
             Égal {
@@ -1453,18 +1441,12 @@ compile_programme :: fonc (asm: *AssembleuseNASM, empl programme: *Programme)
                 imul(asm, "rbx", "rax")
                 push(asm, "rbx")
             }
-            Divise {
+            DivMod {
                 xor(asm, "rdx", "rdx")
                 pop(asm, "rbx")
                 pop(asm, "rax")
                 idiv(asm, "rbx")
                 push(asm, "rax")
-            }
-            Modulo {
-                xor(asm, "rdx", "rdx")
-                pop(asm, "rbx")
-                pop(asm, "rax")
-                idiv(asm, "rbx")
                 push(asm, "rdx")
             }
             Égal {

@@ -11,3 +11,6 @@ macro écris_erreur 2 1 appelsys3 fin
 // Quitte le programme avec le code de retour se
 // trouvant en haut de la pile.
 macro quitte 60 appelsys1 fin
+
+macro div divmod lâche fin
+macro mod divmod permute lâche fin
