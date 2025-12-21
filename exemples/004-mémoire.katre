@@ -1,0 +1,15 @@
+// Écris "abc" dans la mémoire.
+mem 0 + 97 .
+mem 1 + 98 .
+mem 2 + 99 .
+
+// Écris "abc" dans la sortie standarde
+3 mem 0 + 1 1 appelsys3
+
+// Ajoute 1 à chaque caractère stocké pour créer "bcd"
+mem 0 + dup , 1 + .
+mem 1 + dup , 1 + .
+mem 2 + dup , 1 + .
+
+// Écris "bcd" dans la sortie standarde
+3 mem 0 + 1 1 appelsys3

@@ -1,0 +1,16 @@
+3 1 << cliche
+1 3 << cliche
+
+6 1 >> cliche
+8 3 >> cliche
+
+1 2 | 4 | cliche
+
+1 2 & 4 & cliche
+7 2 4 | & cliche
+
+69 420 ^ 69 ^ cliche
+420 69 ^ 420 ^ cliche
+
+42 42 ^ cliche
+42 42 1 >> ^ cliche

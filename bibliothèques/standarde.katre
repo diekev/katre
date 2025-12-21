@@ -1,0 +1,13 @@
+// Écris une chaine dans la sortie normale
+// La taille de chaine et son adresse doivent être
+// sur la pile.
+macro écris 1 1 appelsys3 fin
+
+// Écris une chaine dans la sortie d'erreur
+// La taille de chaine et son adresse doivent être
+// sur la pile.
+macro écris_erreur 2 1 appelsys3 fin
+
+// Quitte le programme avec le code de retour se
+// trouvant en haut de la pile.
+macro quitte 60 appelsys1 fin

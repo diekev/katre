@@ -1,0 +1,39 @@
+inclus "standarde.katre"
+
+macro N 100 fin
+
+mem N 2 - + 1 .
+
+0 tantque dup N < fais
+    0 tantque dup N < fais
+        dup mem + , si
+            dup mem + N + 42 .
+        sinon
+            dup mem + N + 32 .
+        fin
+        1 +
+    fin
+    mem + N + 10 .
+    N 1 + mem N + écris lâche
+
+    mem     , 1 <<
+    mem 1 + , |
+
+    1 tantque dup N 2 - < fais
+        permute 1 << 7 &
+        enjambe 1 + mem + , |
+
+        // permute enjambe 110 permute >> 1 &
+        // enjambe mem + permute .
+        dup2 110 permute >> 1 &
+        permute mem + permute .
+        permute
+
+        1 +
+    fin
+    lâche
+    lâche
+
+    1 +
+fin
+lâche
