@@ -1100,6 +1100,16 @@ simule_programme :: fonc (empl programme: *Programme)
     diffère déloge(simulatrice.mem)
     tableau_redimensionne_sans_init(simulatrice.mem, CAPACITÉ_MÉMOIRE)
 
+    // À FAIRE : pour la simulation, considère avoir une manière de spécifier
+    // des arguments et ajoute des tests
+    arguments := arguments_ligne_commande()
+
+    empile(*simulatrice, 0)
+    pour > arguments {
+        empile(*simulatrice, it.pointeur comme z64)
+    }
+    empile(*simulatrice, arguments.taille)
+
     simule_instructions(*simulatrice, programme.insts)
 }
 

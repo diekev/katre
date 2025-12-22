@@ -1,0 +1,8 @@
+inclus "standarde.katre"
+
+lâche lâche
+tantque dup 0 > fais
+    dup taille_chaine_c permute
+    écris lâche
+    "\n" écris lâche
+fin
