@@ -14,6 +14,8 @@ macro quitte 60 appelsys1 fin
 
 macro dup2 enjambe enjambe fin
 
+macro lâche2 lâche lâche fin
+
 macro div divmod lâche fin
 macro mod divmod permute lâche fin
 
