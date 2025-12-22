@@ -1,16 +1,23 @@
+macro STDIN 0 fin
+macro STDOUT 1 fin
+macro STDERR 2 fin
+
+macro SYS_write 1 fin
+macro SYS_exit 60 fin
+
 // Écris une chaine dans la sortie normale
 // La taille de chaine et son adresse doivent être
 // sur la pile.
-macro écris 1 1 appelsys3 fin
+macro écris STDOUT SYS_write appelsys3 fin
 
 // Écris une chaine dans la sortie d'erreur
 // La taille de chaine et son adresse doivent être
 // sur la pile.
-macro écris_erreur 2 1 appelsys3 fin
+macro écris_erreur STDERR SYS_write appelsys3 fin
 
 // Quitte le programme avec le code de retour se
 // trouvant en haut de la pile.
-macro quitte 60 appelsys1 fin
+macro quitte SYS_exit appelsys1 fin
 
 macro dup2 enjambe enjambe fin
 
