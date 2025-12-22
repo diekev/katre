@@ -7,6 +7,7 @@ importe Triage
 
 Commandes :: struct {
     recorde: bool
+    dossier: chaine
 }
 
 principale :: fonc ()
@@ -16,7 +17,14 @@ principale :: fonc ()
         exit(1)
     }
 
-    chemins_fichiers := donne_chemins_du_dossier("exemples/", ".katre")
+    dossier_entrée := "exemples/"
+    dossier_sortie := "tests/"
+    si args.dossier {
+        dossier_entrée = args.dossier
+        dossier_sortie = args.dossier
+    }
+
+    chemins_fichiers := donne_chemins_du_dossier(dossier_entrée, ".katre")
     diffère déloge_tableau_et_ses_éléments(chemins_fichiers)
 
     tri_rapide(chemins_fichiers, compare_chaine)
@@ -25,7 +33,8 @@ principale :: fonc ()
     diffère déloge_tableau_et_ses_éléments(chemins_sorties)
 
     pour chemins_fichiers {
-        chemin_sortie := imprime_chaine("tests/%.attendu", nom_fichier(CheminFichier(it)))
+        chm := CheminFichier(it)
+        chemin_sortie := imprime_chaine("%/%.attendu", dossier_sortie, nom_fichier(chm))
         tableau_ajoute(*chemins_sorties, chemin_sortie)
     }
 
