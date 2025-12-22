@@ -567,8 +567,7 @@ parse_macro :: fonc (compilatrice: *Compilatrice, programme: *Programme, lexeuse
         }
         sinon si texte.taille == 2 {
             si texte[0] == '\\' {
-                c := texte[1]
-                c = donne_caractère_échappé(c)
+                valeur = donne_caractère_échappé(texte[1])
             }
             sinon {
                 rapporte_erreur(compilatrice, lexème, "constante de caractère invalide")
