@@ -1,4 +1,4 @@
-# Katre
+# Katre
 
 Katre est un langage de programmation à pile.
 
@@ -9,9 +9,11 @@ Katre est :
 - [ ] auto-aubergé
 - [ ] statiquent typé
 
-À FAIRE : documente la mémoire
-À FAIRE : tests
-À FAIRE : document la simulation
+## À FAIRE
+
+- documente la mémoire
+- tests
+- document la simulation
 
 ## Opérations
 
@@ -41,6 +43,7 @@ a = dépile()
 b = dépile()
 empile(b / a)
 empile(b % a)
+```
 
 ### Binaires
 
