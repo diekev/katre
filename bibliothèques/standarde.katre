@@ -48,3 +48,9 @@ macro stocke64
     dup2 255 & . 8 >> permute 1 + permute
     dup2 255 & . lâche lâche
 fin
+
+// À FAIRE : considère une intrisèque pour obtenir le lieu source
+macro À_FAIRE 
+    "À FAIRE\n" écris
+    1 quitte
+fin
