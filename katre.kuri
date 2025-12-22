@@ -1278,8 +1278,8 @@ simule_instructions :: fonc (simulatrice: *Simulatrice, insts: []octet)
             }
             LisMem {
                 mem := dépile(simulatrice) comme *octet
-                valeur : z64 = mémoire(mem) comme z8
-                empile(simulatrice, valeur)
+                valeur : n64 = (mémoire(mem)) comme n8
+                empile(simulatrice, valeur comme z64)
             }
             ÉcrisMem {
                 valeur := dépile(simulatrice)
