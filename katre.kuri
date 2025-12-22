@@ -178,6 +178,8 @@ Compilatrice :: struct {
     fichiers: [..]*FichierSource
     pile_fichiers: [..]*FichierSource
     macros_courantes: [..]*Macro
+
+    profondeur: z32
 }
 
 commentaires_ligne_singulière := ["//"]
@@ -533,7 +535,7 @@ parse_macro :: fonc (compilatrice: *Compilatrice, programme: *Programme, lexeuse
             retourne faux
         }
 
-        si est_mot_clé(lexème, "fin") {
+        si est_mot_clé(lexème, "fin") && compilatrice.profondeur == 0 {
             arrête
         }
 
@@ -633,15 +635,18 @@ parse_macro :: fonc (compilatrice: *Compilatrice, programme: *Programme, lexeuse
         émets(insts, Duplique, lexème)
     }
     sinon si est_mot_clé(lexème, "si") {
+        compilatrice.profondeur += 1
         émets(insts, Si, lexème)
     }
     sinon si est_mot_clé(lexème, "sinon") {
         émets(insts, Sinon, lexème)
     }
     sinon si est_mot_clé(lexème, "fin") {
+        compilatrice.profondeur -= 1
         émets(insts, Fin, lexème)
     }
     sinon si est_mot_clé(lexème, "tantque") {
+        compilatrice.profondeur += 1
         émets(insts, Tantque, lexème)
     }
     sinon si est_mot_clé(lexème, "fais") {
