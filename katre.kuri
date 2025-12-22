@@ -111,18 +111,7 @@ ajoute_chaine :: fonc (empl programme: *Programme, chn: chaine) -> ChaineConstan
             entrée += 1
             si entrée < fin {
                 c1 := mémoire(entrée)
-                si c1 comme z8 == 'n' {
-                    c = '\n' comme octet
-                }
-                sinon si c1 comme z8 == 't' {
-                    c = '\t' comme octet
-                }
-                sinon si c1 comme z8 == 'v' {
-                    c = '\v' comme octet
-                }
-                sinon {
-                    c = c1
-                }
+                c = donne_caractère_échappé(c1 comme z8) comme octet
             }
         }
 
@@ -135,6 +124,27 @@ ajoute_chaine :: fonc (empl programme: *Programme, chn: chaine) -> ChaineConstan
     résultat.taille = sortie - début
 
     retourne résultat
+}
+
+donne_caractère_échappé :: fonc (c: z8) -> z8
+{
+    si c == 'n' {
+        retourne '\n'
+    }
+    si c == 't' {
+        retourne '\t'
+    }
+    si c == 'v' {
+        retourne '\v'
+    }
+    si c == 'f' {
+        retourne '\f'
+    }
+    si '0' <= c <= '9' {
+        retourne c - '0'
+    }
+
+    retourne c
 }
 
 donne_chaine :: fonc (programme: *Programme, chn: ChaineConstante) -> chaine
@@ -556,25 +566,7 @@ parse_macro :: fonc (compilatrice: *Compilatrice, programme: *Programme, lexeuse
         sinon si texte.taille == 2 {
             si texte[0] == '\\' {
                 c := texte[1]
-                // À FAIRE : déduplique avec la version pour les chaines
-                si c == 'n' {
-                    valeur = '\n'
-                }
-                sinon si c == 't' {
-                    valeur = '\t'
-                }
-                sinon si c == '\'' {
-                    valeur = '\''
-                }
-                sinon si c == 'f' {
-                    valeur = '\f'
-                }
-                sinon si c == 'v' {
-                    valeur = '\v'
-                }
-                sinon {
-                    valeur = c
-                }
+                c = donne_caractère_échappé(c)
             }
             sinon {
                 rapporte_erreur(compilatrice, lexème, "constante de caractère invalide")
