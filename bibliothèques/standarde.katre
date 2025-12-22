@@ -14,3 +14,26 @@ macro quitte 60 appelsys1 fin
 
 macro div divmod lâche fin
 macro mod divmod permute lâche fin
+
+macro charge64
+    7 + 0
+    8 << enjambe , + permute 1 - permute
+    8 << enjambe , + permute 1 - permute
+    8 << enjambe , + permute 1 - permute
+    8 << enjambe , + permute 1 - permute
+    8 << enjambe , + permute 1 - permute
+    8 << enjambe , + permute 1 - permute
+    8 << enjambe , + permute 1 - permute
+    8 << enjambe , + permute lâche
+fin
+
+macro stocke64
+    dup2 255 & . 8 >> permute 1 + permute
+    dup2 255 & . 8 >> permute 1 + permute
+    dup2 255 & . 8 >> permute 1 + permute
+    dup2 255 & . 8 >> permute 1 + permute
+    dup2 255 & . 8 >> permute 1 + permute
+    dup2 255 & . 8 >> permute 1 + permute
+    dup2 255 & . 8 >> permute 1 + permute
+    dup2 255 & . lâche lâche
+fin
