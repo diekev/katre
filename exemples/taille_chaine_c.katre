@@ -1,0 +1,3 @@
+inclus "standarde.katre"
+
+"Bonjour, tout le monde !\0" taille_chaine_c cliche cliche

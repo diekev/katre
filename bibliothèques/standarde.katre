@@ -48,6 +48,12 @@ macro stocke64
     dup2 255 & . lâche lâche
 fin
 
+macro taille_chaine_c
+    0 permute tantque dup , 0 > fais
+        permute 1 + permute 1 +
+    fin lâche
+fin
+
 // À FAIRE : considère une intrisèque pour obtenir le lieu source
 macro À_FAIRE 
     "À FAIRE\n" écris
