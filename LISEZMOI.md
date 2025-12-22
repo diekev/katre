@@ -189,15 +189,6 @@ a = dépile()
 empile(a)
 empile(a)
 ```
-- `dup2` - duplique les deux éléments en haut de la pile
-```
-a = dépile()
-b = dépile()
-empile(b)
-empile(a)
-empile(b)
-empile(a)
-```
 - `enjambe` - place une copie du deuxième élément de la pile en haut de celle-ci
 ```
 a = dépile()
