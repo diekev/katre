@@ -184,7 +184,7 @@ Compilatrice :: struct {
 
 commentaires_ligne_singulière := ["//"]
 commentaires_multi_lignes := [ ["/*", "*/"] ]
-ponctuations := ["+", "-", "*", ".", ",", "=", ">", "<", ">=", "<=", "<<", ">>", "&", "|", "^"]
+ponctuations := ["+", "-", "*", ".", ",", "=", "!=", ">", "<", ">=", "<=", "<<", ">>", "&", "|", "^"]
 mots_clés := ["dup", "si", "sinon", "fin", "tantque", "fais", "mem", "cliche", "lâche", "appelsys1", "appelsys2", "appelsys3", "permute", "enjambe", "macro", "inclus", "divmod"]
 
 ouvre_fichier :: fonc (compilatrice: *Compilatrice, chemin: chaine) -> *FichierSource
@@ -597,6 +597,9 @@ parse_macro :: fonc (compilatrice: *Compilatrice, programme: *Programme, lexeuse
     sinon si est_ponctuation(lexème, "=") {
         émets(insts, Égal, lexème)
     }
+    sinon si est_ponctuation(lexème, "!=") {
+        émets(insts, Inégal, lexème)
+    }
     sinon si est_ponctuation(lexème, "<") {
         émets(insts, Inférieur, lexème)
     }
@@ -856,6 +859,11 @@ Enjambe :: struct {
 }
 
 Égal :: struct {
+    empl base: Instruction
+    genre = #type_de_cette_structure
+}
+
+Inégal :: struct {
     empl base: Instruction
     genre = #type_de_cette_structure
 }
@@ -1163,6 +1171,12 @@ simule_instructions :: fonc (simulatrice: *Simulatrice, insts: []octet)
                 résultat := si a == b { 1 } sinon { 0 }
                 empile(simulatrice, résultat)
             }
+            Inégal {
+                a := dépile(simulatrice)
+                b := dépile(simulatrice)
+                résultat := si a != b { 1 } sinon { 0 }
+                empile(simulatrice, résultat)
+            }
             Inférieur {
                 a := dépile(simulatrice)
                 b := dépile(simulatrice)
@@ -1461,6 +1475,15 @@ compile_programme :: fonc (asm: *AssembleuseNASM, empl programme: *Programme)
                 pop(asm, "rax")
                 cmp(asm, "rax", "rbx")
                 cmove(asm, "rcx", "rdx")
+                push(asm, "rcx")
+            }
+            Inégal {
+                xor(asm, "rcx", "rcx")
+                mov(asm, "rdx", "1")
+                pop(asm, "rbx")
+                pop(asm, "rax")
+                cmp(asm, "rax", "rbx")
+                cmovne(asm, "rcx", "rdx")
                 push(asm, "rcx")
             }
             Inférieur {
@@ -1794,6 +1817,11 @@ test :: fonc (asm: *AssembleuseNASM, dst: chaine, src: chaine)
 }
 
 cmove :: fonc (asm: *AssembleuseNASM, dst: chaine, src: chaine)
+{
+    émets_instruction(asm, #nom_de_cette_fonction, dst, src)
+}
+
+cmovne :: fonc (asm: *AssembleuseNASM, dst: chaine, src: chaine)
 {
     émets_instruction(asm, #nom_de_cette_fonction, dst, src)
 }
