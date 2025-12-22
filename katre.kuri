@@ -1288,7 +1288,16 @@ simule_instructions :: fonc (simulatrice: *Simulatrice, insts: []octet)
             }
             AppelSys3 {
                 code := dépile(simulatrice)
-                si code == 1 {
+                si code == 0 {
+                    arg0 := dépile(simulatrice)
+                    arg1 := dépile(simulatrice)
+                    arg2 := dépile(simulatrice)
+
+                    résultat := read(arg0 comme z32, arg1 comme *z8, arg2 comme n64)
+
+                    empile(simulatrice, résultat)
+                }
+                sinon si code == 1 {
                     arg0 := dépile(simulatrice)
                     arg1 := dépile(simulatrice)
                     arg2 := dépile(simulatrice)

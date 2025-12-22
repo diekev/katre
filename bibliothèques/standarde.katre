@@ -13,6 +13,14 @@ macro stderr 2 fin
 // Retourne le nombre d'octets écris
 macro écris SYS_write appelsys3 fin
 
+// Lis des octets depuis un fichier dans un tampon.
+//
+// Utilisation :
+//    <taille tampon> <adresse tampon> <fichier> lis
+//
+// Retourne le nombre d'octets lus.
+macro lis SYS_read appelsys3 fin
+
 // Quitte le programme avec le code de retour se
 // trouvant en haut de la pile.
 macro quitte SYS_exit appelsys1 fin
