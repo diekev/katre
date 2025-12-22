@@ -1,0 +1,34 @@
+inclus "standarde.katre"
+
+600851475143 2 tantque enjambe 1 > fais
+    dup2 mod 0 = si
+        permute enjambe div permute
+    sinon
+        1 +
+    fin
+fin
+
+cliche
+
+/*
+
+// Version brute avec de la mémoire
+
+macro cible 600851475143 fin
+macro acc mem fin
+macro résultat mem 8 + fin
+
+acc 1 stocke64
+
+2 tantque acc charge64 cible < fais
+    dup cible permute mod 0 = si
+        dup résultat permute stocke64
+        dup acc charge64 * acc permute stocke64
+    fin
+
+    1 +
+fin
+lâche
+
+résultat charge64 cliche
+*/
