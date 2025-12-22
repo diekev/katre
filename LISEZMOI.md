@@ -165,7 +165,7 @@ tantque:
         reprends à tantque
 ```
 
-### Manipulatio de la mémoire
+### Manipulation de la mémoire
 
 - `mem` - place l'adresse de base de la mémoire sur la pile
 ```
@@ -184,7 +184,7 @@ a = lis_octet(adresse)
 empile(a)
 ```
 
-### Manipulation de la pile
+### Manipulation de la pile
 
 - `dup` - duplique l'élément en haut de la pile
 ```
@@ -216,9 +216,9 @@ empile(b)
 
 Ces opérations sont temporaires tant que le langage est en développement.
 
-- `appelsys1` - performe un appel système Linux ave 1 argument
-- `appelsys2` - performe un appel système Linux ave 2 arguments
-- `appelsys3` - performe un appel système Linux ave 3 arguments
+- `appelsys1` - performe un appel système Linux avec 1 argument
+- `appelsys2` - performe un appel système Linux avec 2 arguments
+- `appelsys3` - performe un appel système Linux avec 3 arguments
 
 ### Débogage
 
