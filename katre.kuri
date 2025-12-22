@@ -1392,7 +1392,13 @@ compile_programme :: fonc (asm: *AssembleuseNASM, empl programme: *Programme)
             NombreEntier {
                 inst := base comme *NombreEntier
                 src := imprime_chaine("%", inst.arg)
-                push(asm, src)
+                si inst.arg >= 0x7fffffff {
+                    mov(asm, "rax", src)
+                    push(asm, "rax")
+                }
+                sinon {
+                    push(asm, src)
+                }
             }
             ChaineLittérale {
                 inst := base comme *ChaineLittérale
