@@ -1,0 +1,14 @@
+inclus "standarde.katre"
+
+macro acc mem fin
+
+1 2 tantque acc charge64 4000000 <= fais
+    enjambe 2 mod 0 = si
+        enjambe acc charge64 + acc permute stocke64
+    fin
+    permute enjambe +
+fin
+lâche
+lâche
+
+acc charge64 cliche

@@ -1,0 +1,16 @@
+inclus "standarde.katre"
+
+0
+3 tantque dup 1000 < fais
+    dup     3 mod 0 = 
+    enjambe 5 mod 0 = 
+    | si
+        permute
+        enjambe +
+        permute
+    fin
+
+    1 +
+fin
+lâche
+cliche
