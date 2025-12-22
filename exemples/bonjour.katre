@@ -1,1 +1,3 @@
-"Bonjour, tout le monde !\n" 1 1 appelsys3
+inclus "standarde.katre"
+
+"Bonjour, tout le monde !\n" stdout écris lâche

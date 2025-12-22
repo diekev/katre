@@ -2,4 +2,4 @@
 tantque dup 0 > fais
     dup cliche
     1 -
-fin
+fin lâche

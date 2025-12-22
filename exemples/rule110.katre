@@ -6,7 +6,7 @@ mem N 2 - + 1 .
 
 0 tantque dup N < fais
     0 tantque dup N < fais
-        dup mem + , si
+        dup mem + , 1 = si
             dup mem + N + '*' .
         sinon
             dup mem + N + ' ' .

@@ -19,6 +19,7 @@ Commandes :: struct {
     compile: bool
     lance: bool
     désassemble: bool
+    valide: bool
     fichier: chaine @anonyme
 }
 
@@ -49,6 +50,10 @@ principale :: fonc ()
 
     si args.désassemble {
         imprime_instructions(*programme)
+    }
+
+    si args.valide {
+        valide_sémantique(*compilatrice, *programme)
     }
 
     si args.simule {
@@ -1057,6 +1062,519 @@ renvoie_blocs :: fonc (compilatrice: *Compilatrice, empl programme: *Programme) 
     }
 
     retourne vrai
+}
+
+/** \} */
+
+/* ------------------------------------------------------------------------- */
+/** \nom Validation sémantique.
+ * \{ */
+
+Type :: énum {
+    ENTIER
+    POINTEUR
+    BOOL
+}
+
+Cellule :: struct {
+    type: Type
+    lexème: Lexème
+}
+
+empile :: fonc (tableau: *[..]$T, valeur: T)
+{
+    tableau_ajoute(tableau, valeur)
+}
+
+dépile :: fonc (tableau: *[..]$T) -> T
+{
+    résultat := mémoire(tableau)[tableau.taille - 1]
+    tableau.taille -= 1
+    retourne résultat
+}
+
+ÉtatPileCellule :: struct {
+    pile: [..]Cellule
+    inst: *Instruction
+}
+
+compare_piles :: fonc (compilatrice: *Compilatrice, inst: *Instruction, pile1: []Cellule, pile2: []Cellule, message: chaine)
+{
+    piles_sont_similaires := faux
+    si pile1.taille == pile2.taille {
+        pour pile1 {
+            si pile2[indice_it].type != it.type {
+                arrête
+            }
+        }
+        sansarrêt {
+            piles_sont_similaires = vrai
+        }
+    }
+
+    si piles_sont_similaires == faux {
+        rapporte_erreur(compilatrice, inst.lexème, message)
+        exit(1)
+    }
+}
+
+valide_sémantique :: fonc (compilatrice: *Compilatrice, programme: *Programme)
+{
+    pile_cellules: [..]Cellule
+
+    états_pile_cellules: [..]ÉtatPileCellule
+
+    début := programme.insts.pointeur
+    fin := programme.insts.pointeur + programme.insts.taille
+
+    tantque début < fin {
+        base := début comme *Instruction
+        type := base.genre comme *InfoTypeStructure
+
+        discr base.genre {
+            NombreEntier {
+                empile(*pile_cellules, Cellule(Type.ENTIER, base.lexème))
+            }
+            ChaineLittérale {
+                empile(*pile_cellules, Cellule(Type.ENTIER, base.lexème))
+                empile(*pile_cellules, Cellule(Type.POINTEUR, base.lexème))
+            }
+            Ajoute {
+                garantie_taille_pile_min(compilatrice, pile_cellules, 2, base)
+
+                a := dépile(*pile_cellules)
+                b := dépile(*pile_cellules)
+
+                si a.type != Type.POINTEUR && a.type != Type.ENTIER {
+                    rapporte_erreur(compilatrice, base.lexème, "l'addition requiers un type entier")
+                    exit(1)
+                }
+
+                si b.type != Type.POINTEUR && b.type != Type.ENTIER {
+                    rapporte_erreur(compilatrice, base.lexème, "seuls des entiers et des pointeurs peuvent être additionnés, reçu : %", b.type)
+                    exit(1)
+                }
+
+                si a.type == Type.POINTEUR && b.type == Type.POINTEUR {
+                    rapporte_erreur(compilatrice, base.lexème, "une addition entre des pointeurs est invalide")
+                    exit(1)
+                }
+
+                type_résultat := Type.ENTIER
+                si a.type == Type.POINTEUR || b.type == Type.POINTEUR {
+                    type_résultat = Type.POINTEUR
+                }
+
+                empile(*pile_cellules, Cellule(type_résultat, base.lexème))
+            }
+            Soustrait {
+                garantie_taille_pile_min(compilatrice, pile_cellules, 2, base)
+
+                a := dépile(*pile_cellules)
+                b := dépile(*pile_cellules)
+
+                si a.type != Type.ENTIER {
+                    rapporte_erreur(compilatrice, base.lexème, "la soustraction requiers un type entier en deuxième opérande")
+                    exit(1)
+                }
+
+                si b.type != Type.ENTIER && b.type != Type.POINTEUR {
+                    rapporte_erreur(compilatrice, base.lexème, "la soustraction requiers un type entier ou pointeur comme première opérande")
+                    exit(1)
+                }
+
+                empile(*pile_cellules, Cellule(b.type, base.lexème))
+            }
+            Multiplie {
+                garantie_taille_pile_min(compilatrice, pile_cellules, 2, base)
+
+                a := dépile(*pile_cellules)
+                b := dépile(*pile_cellules)
+
+                si a.type != b.type {
+                    rapporte_erreur(compilatrice, base.lexème, "types différents pour l'opération")
+                    exit(1)
+                }
+
+                si a.type != Type.ENTIER {
+                    rapporte_erreur(compilatrice, base.lexème, "requiers des types entiers")
+                    exit(1)
+                }
+
+                empile(*pile_cellules, Cellule(Type.ENTIER, base.lexème))
+            }
+            DivMod {
+                garantie_taille_pile_min(compilatrice, pile_cellules, 2, base)
+
+                a := dépile(*pile_cellules)
+                b := dépile(*pile_cellules)
+
+                si a.type != b.type {
+                    rapporte_erreur(compilatrice, base.lexème, "types différents pour l'opération")
+                    exit(1)
+                }
+
+                si a.type != Type.ENTIER {
+                    rapporte_erreur(compilatrice, base.lexème, "requiers des types entiers")
+                    exit(1)
+                }
+
+                empile(*pile_cellules, Cellule(Type.ENTIER, base.lexème))
+                empile(*pile_cellules, Cellule(Type.ENTIER, base.lexème))
+            }
+            Égal {
+                garantie_taille_pile_min(compilatrice, pile_cellules, 2, base)
+
+                a := dépile(*pile_cellules)
+                b := dépile(*pile_cellules)
+
+                si a.type != b.type {
+                    rapporte_erreur(compilatrice, base.lexème, "types différents pour l'opération")
+                    exit(1)
+                }
+
+                empile(*pile_cellules, Cellule(Type.BOOL, base.lexème))
+            }
+            Inégal {
+                garantie_taille_pile_min(compilatrice, pile_cellules, 2, base)
+
+                a := dépile(*pile_cellules)
+                b := dépile(*pile_cellules)
+
+                si a.type != b.type {
+                    rapporte_erreur(compilatrice, base.lexème, "types différents pour l'opération")
+                    exit(1)
+                }
+
+                empile(*pile_cellules, Cellule(Type.BOOL, base.lexème))
+            }
+            Inférieur {
+                garantie_taille_pile_min(compilatrice, pile_cellules, 2, base)
+
+                a := dépile(*pile_cellules)
+                b := dépile(*pile_cellules)
+
+                si a.type != b.type {
+                    rapporte_erreur(compilatrice, base.lexème, "types différents pour l'opération")
+                    exit(1)
+                }
+
+                si a.type != Type.ENTIER && a.type != Type.POINTEUR {
+                    rapporte_erreur(compilatrice, a.lexème, "requiers des types entier ou pointeur")
+                    exit(1)
+                }
+
+                empile(*pile_cellules, Cellule(Type.BOOL, base.lexème))
+            }
+            InférieurÉgal {
+                garantie_taille_pile_min(compilatrice, pile_cellules, 2, base)
+
+                a := dépile(*pile_cellules)
+                b := dépile(*pile_cellules)
+
+                si a.type != b.type {
+                    rapporte_erreur(compilatrice, base.lexème, "types différents pour l'opération")
+                    exit(1)
+                }
+
+                si a.type != Type.ENTIER && a.type != Type.POINTEUR {
+                    rapporte_erreur(compilatrice, a.lexème, "requiers des types entier ou pointeur")
+                    exit(1)
+                }
+
+                empile(*pile_cellules, Cellule(Type.BOOL, base.lexème))
+            }
+            Supérieur {
+                garantie_taille_pile_min(compilatrice, pile_cellules, 2, base)
+
+                a := dépile(*pile_cellules)
+                b := dépile(*pile_cellules)
+
+                si a.type != b.type {
+                    rapporte_erreur(compilatrice, base.lexème, "types différents pour l'opération")
+                    exit(1)
+                }
+
+                si a.type != Type.ENTIER && a.type != Type.POINTEUR {
+                    rapporte_erreur(compilatrice, a.lexème, "requiers des types entier ou pointeur")
+                    exit(1)
+                }
+
+                empile(*pile_cellules, Cellule(Type.BOOL, base.lexème))
+            }
+            SupérieurÉgal {
+                garantie_taille_pile_min(compilatrice, pile_cellules, 2, base)
+
+                a := dépile(*pile_cellules)
+                b := dépile(*pile_cellules)
+
+                si a.type != b.type {
+                    rapporte_erreur(compilatrice, base.lexème, "types différents pour l'opération")
+                    exit(1)
+                }
+
+                si a.type != Type.ENTIER && a.type != Type.POINTEUR {
+                    rapporte_erreur(compilatrice, a.lexème, "requiers des types entier ou pointeur")
+                    exit(1)
+                }
+
+                empile(*pile_cellules, Cellule(Type.BOOL, base.lexème))
+            }
+            DécalageDroite {
+                garantie_taille_pile_min(compilatrice, pile_cellules, 2, base)
+
+                a := dépile(*pile_cellules)
+                b := dépile(*pile_cellules)
+
+                si a.type != b.type {
+                    rapporte_erreur(compilatrice, base.lexème, "types différents pour l'opération")
+                    exit(1)
+                }
+
+                si a.type != Type.ENTIER {
+                    rapporte_erreur(compilatrice, a.lexème, "requiers des types entier")
+                    exit(1)
+                }
+
+                empile(*pile_cellules, Cellule(Type.ENTIER, base.lexème))
+            }
+            DécalageGauche {
+                garantie_taille_pile_min(compilatrice, pile_cellules, 2, base)
+
+                a := dépile(*pile_cellules)
+                b := dépile(*pile_cellules)
+
+                si a.type != b.type {
+                    rapporte_erreur(compilatrice, base.lexème, "types différents pour l'opération")
+                    exit(1)
+                }
+
+                si a.type != Type.ENTIER {
+                    rapporte_erreur(compilatrice, a.lexème, "requiers des types entier")
+                    exit(1)
+                }
+
+                empile(*pile_cellules, Cellule(Type.ENTIER, base.lexème))
+            }
+            EtBinaire {
+                garantie_taille_pile_min(compilatrice, pile_cellules, 2, base)
+
+                a := dépile(*pile_cellules)
+                b := dépile(*pile_cellules)
+
+                si a.type != b.type {
+                    rapporte_erreur(compilatrice, base.lexème, "types différents pour l'opération")
+                    exit(1)
+                }
+
+                si a.type != Type.ENTIER {
+                    rapporte_erreur(compilatrice, base.lexème, "requiers des types entier")
+                    exit(1)
+                }
+
+                empile(*pile_cellules, Cellule(Type.ENTIER, base.lexème))
+            }
+            OuInclusif {
+                garantie_taille_pile_min(compilatrice, pile_cellules, 2, base)
+
+                a := dépile(*pile_cellules)
+                b := dépile(*pile_cellules)
+
+                si a.type != b.type {
+                    rapporte_erreur(compilatrice, base.lexème, "types différents pour l'opération")
+                    exit(1)
+                }
+
+                si a.type != Type.ENTIER && a.type != Type.BOOL {
+                    rapporte_erreur(compilatrice, base.lexème, "requiers des types entier ou booléens")
+                    exit(1)
+                }
+
+                empile(*pile_cellules, Cellule(a.type, base.lexème))
+            }
+            OuExclusif {
+                garantie_taille_pile_min(compilatrice, pile_cellules, 2, base)
+
+                a := dépile(*pile_cellules)
+                b := dépile(*pile_cellules)
+
+                si a.type != b.type {
+                    rapporte_erreur(compilatrice, base.lexème, "types différents pour l'opération")
+                    exit(1)
+                }
+
+                si a.type != Type.ENTIER {
+                    rapporte_erreur(compilatrice, base.lexème, "requiers des types entier")
+                    exit(1)
+                }
+
+                empile(*pile_cellules, Cellule(Type.ENTIER, base.lexème))
+            }
+            Cliche {
+                garantie_taille_pile_min(compilatrice, pile_cellules, 1, base)
+                _ := dépile(*pile_cellules)
+            }
+            Duplique {
+                garantie_taille_pile_min(compilatrice, pile_cellules, 1, base)
+                a := dépile(*pile_cellules)
+                empile(*pile_cellules, a)
+                empile(*pile_cellules, a)
+            }
+            Permute {
+                garantie_taille_pile_min(compilatrice, pile_cellules, 2, base)
+                a := dépile(*pile_cellules)
+                b := dépile(*pile_cellules)
+                empile(*pile_cellules, a)
+                empile(*pile_cellules, b)
+            }
+            Enjambe {
+                garantie_taille_pile_min(compilatrice, pile_cellules, 2, base)
+                a := dépile(*pile_cellules)
+                b := dépile(*pile_cellules)
+                empile(*pile_cellules, b)
+                empile(*pile_cellules, a)
+                empile(*pile_cellules, b)
+            }
+            Si {
+                garantie_taille_pile_min(compilatrice, pile_cellules, 1, base)
+
+                a := dépile(*pile_cellules)
+                si a.type != Type.BOOL {
+                    rapporte_erreur(compilatrice, a.lexème, "la valeur de test d'une instruction si doit être de type booléen")
+                    exit(1)
+                }
+
+                état: ÉtatPileCellule
+                état.pile = tableau_copie(pile_cellules)
+                état.inst = base
+                tableau_ajoute(*états_pile_cellules, état)
+            }
+            Sinon {
+                assert(états_pile_cellules.taille != 0)
+
+                état_avant_si := dépile(*états_pile_cellules)
+                assert(état_avant_si.inst.genre == Si)
+
+                état: ÉtatPileCellule
+                état.pile = pile_cellules
+                état.inst = base
+                tableau_ajoute(*états_pile_cellules, état)
+
+                pile_cellules = état_avant_si.pile
+            }
+            Fin {
+                assert(états_pile_cellules.taille != 0)
+
+                état := dépile(*états_pile_cellules)
+                si état.inst.genre == Si {
+                    compare_piles(compilatrice, état.inst, état.pile, pile_cellules, "une instruction si sans branche sinon ne doit pas modifier l'état de la pile")
+                }
+                sinon si état.inst.genre == Sinon {
+                    compare_piles(compilatrice, état.inst, état.pile, pile_cellules, "les deux branches de si-sinon doivent générer la même pile")
+                }
+                sinon si état.inst.genre == Fais {
+                    compare_piles(compilatrice, état.inst, état.pile, pile_cellules, "une instruction tantque ne doit pas modifier l'état de la pile")
+                }
+                sinon {
+                    genre := état.inst.genre comme *InfoTypeStructure
+                    panique("instruction non-gérée : %", genre.nom)
+                }
+
+                déloge(pile_cellules)
+                pile_cellules = état.pile
+            }
+            Tantque {
+                // tantque n'est qu'une marqueur
+            }
+            Fais {
+                garantie_taille_pile_min(compilatrice, pile_cellules, 1, base)
+
+                a := dépile(*pile_cellules)
+                si a.type != Type.BOOL {
+                    rapporte_erreur(compilatrice, a.lexème, "la valeur de test d'une instruction fais doit être de type booléen")
+                    exit(1)
+                }
+
+                état: ÉtatPileCellule
+                état.pile = tableau_copie(pile_cellules)
+                état.inst = base
+                tableau_ajoute(*états_pile_cellules, état)
+            }
+            Mem {
+                empile(*pile_cellules, Cellule(Type.POINTEUR, base.lexème))
+            }
+            LisMem {
+                garantie_taille_pile_min(compilatrice, pile_cellules, 1, base)
+
+                a := dépile(*pile_cellules)
+
+                si a.type != Type.POINTEUR {
+                    rapporte_erreur(compilatrice, a.lexème, "l'écriture de mémoire doit prendre un pointeur comme destination")
+                    exit(1)
+                }
+
+                empile(*pile_cellules, Cellule(Type.ENTIER, base.lexème))
+            }
+            ÉcrisMem {
+                garantie_taille_pile_min(compilatrice, pile_cellules, 2, base)
+
+                _ := dépile(*pile_cellules)
+                a := dépile(*pile_cellules)
+
+                si a.type != Type.POINTEUR {
+                    rapporte_erreur(compilatrice, a.lexème, "l'écriture de mémoire doit prendre un pointeur comme destination")
+                    exit(1)
+                }
+            }
+            AppelSys1 {
+                garantie_taille_pile_min(compilatrice, pile_cellules, 2, base)
+                _ := dépile(*pile_cellules)
+                _ := dépile(*pile_cellules)
+                empile(*pile_cellules, Cellule(Type.ENTIER, base.lexème))
+            }
+            AppelSys2 {
+                garantie_taille_pile_min(compilatrice, pile_cellules, 3, base)
+                _ := dépile(*pile_cellules)
+                _ := dépile(*pile_cellules)
+                _ := dépile(*pile_cellules)
+                empile(*pile_cellules, Cellule(Type.ENTIER, base.lexème))
+            }
+            AppelSys3 {
+                garantie_taille_pile_min(compilatrice, pile_cellules, 4, base)
+                _ := dépile(*pile_cellules)
+                _ := dépile(*pile_cellules)
+                _ := dépile(*pile_cellules)
+                _ := dépile(*pile_cellules)
+                empile(*pile_cellules, Cellule(Type.ENTIER, base.lexème))
+            }
+            Lâche {
+                garantie_taille_pile_min(compilatrice, pile_cellules, 1, base)
+                _ := dépile(*pile_cellules)
+            }
+            sinon {
+                panique("Instruction non-géré : %", type.nom)
+            }
+        }
+
+        début += type.taille_en_octet
+    }
+
+    si pile_cellules {
+        tantque pile_cellules {
+            valeur := dépile(*pile_cellules)
+            rapporte_erreur(compilatrice, valeur.lexème, "valeur restante sur la pile")
+        }
+
+        exit(1)
+    }
+}
+
+garantie_taille_pile_min :: fonc (compilatrice: *Compilatrice, pile: []Cellule, taille_min: z64, inst: *Instruction)
+{
+    si pile.taille < taille_min {
+        rapporte_erreur(compilatrice, inst.lexème, "pas assez de valeurs sur la pile")
+        exit(1)
+    }
 }
 
 /** \} */
