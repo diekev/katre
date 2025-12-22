@@ -1,0 +1,27 @@
+inclus "standarde.katre"
+
+macro acc mem fin
+
+100 tantque dup 1000 < fais
+    100 tantque dup 1000 < fais
+        dup2 *
+
+        dup 0 tantque enjambe 0 > fais
+            10 * enjambe 10 mod + permute 10 div permute
+        fin
+        permute lâche
+
+        dup2 = si
+            dup acc charge64 > si
+                acc enjambe stocke64
+            fin
+        fin
+        lâche2
+        
+        1 +
+    fin lâche
+
+    1 +
+fin lâche
+
+acc charge64 cliche
