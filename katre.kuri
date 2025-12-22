@@ -692,7 +692,6 @@ parse_macro :: fonc (compilatrice: *Compilatrice, programme: *Programme, lexeuse
                     retourne vrai
                 }
                 // À FAIRE : peut-être dévrions attendre pour développer la macro
-                // émets(insts, DéveloppementMacro, lexème, macro)
                 tableau_ajoute(insts, ...macro.insts)
                 retourne vrai
             }
@@ -764,13 +763,6 @@ ChaineLittérale :: struct {
     genre = #type_de_cette_structure
 
     chaine_constante: ChaineConstante
-}
-
-DéveloppementMacro :: struct {
-    empl base: Instruction
-    genre = #type_de_cette_structure
-
-    macro: *Macro
 }
 
 Ajoute :: struct {
@@ -954,10 +946,6 @@ imprime_instructions :: fonc (empl programme: *Programme)
             ChaineLittérale {
                 chn := donne_texte(inst.lexème)
                 imprime(" \"%\"", chn)
-            }
-            DéveloppementMacro {
-                macro := inst comme *DéveloppementMacro
-                imprime(" %", macro.macro.nom)
             }
             Si {}
             Sinon {}
@@ -1326,9 +1314,6 @@ simule_instructions :: fonc (simulatrice: *Simulatrice, insts: []octet)
             }
             Lâche {
                 _ := dépile(simulatrice)
-            }
-            DéveloppementMacro {
-
             }
             sinon {
                 panique("Instruction non-géré : %", type.nom)
