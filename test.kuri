@@ -17,11 +17,9 @@ principale :: fonc ()
         exit(1)
     }
 
-    dossier_entrée := "exemples/"
-    dossier_sortie := "tests/"
+    dossier_entrée := "tests/"
     si args.dossier {
         dossier_entrée = args.dossier
-        dossier_sortie = args.dossier
     }
 
     chemins_fichiers := donne_chemins_du_dossier(dossier_entrée, ".katre")
@@ -34,7 +32,7 @@ principale :: fonc ()
 
     pour chemins_fichiers {
         chm := CheminFichier(it)
-        chemin_sortie := imprime_chaine("%/%.attendu", dossier_sortie, nom_fichier(chm))
+        chemin_sortie := imprime_chaine("%/%.attendu", dossier_entrée, nom_fichier(chm))
         tableau_ajoute(*chemins_sorties, chemin_sortie)
     }
 
