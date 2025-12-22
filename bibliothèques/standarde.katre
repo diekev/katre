@@ -1,18 +1,13 @@
 inclus "linux.katre"
 
-macro STDIN 0 fin
-macro STDOUT 1 fin
-macro STDERR 2 fin
+macro stdin 0 fin
+macro stdout 1 fin
+macro stderr 2 fin
 
 // Écris une chaine dans la sortie normale
 // La taille de chaine et son adresse doivent être
 // sur la pile.
-macro écris STDOUT SYS_write appelsys3 fin
-
-// Écris une chaine dans la sortie d'erreur
-// La taille de chaine et son adresse doivent être
-// sur la pile.
-macro écris_erreur STDERR SYS_write appelsys3 fin
+macro écris SYS_write appelsys3 fin
 
 // Quitte le programme avec le code de retour se
 // trouvant en haut de la pile.

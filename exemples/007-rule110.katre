@@ -14,7 +14,7 @@ mem N 2 - + 1 .
         1 +
     fin
     mem + N + '\n' .
-    N 1 + mem N + écris lâche
+    N 1 + mem N + stdout écris lâche
 
     mem     , 1 <<
     mem 1 + , |
