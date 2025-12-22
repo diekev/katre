@@ -4,9 +4,13 @@ macro stdin 0 fin
 macro stdout 1 fin
 macro stderr 2 fin
 
-// Écris une chaine dans la sortie normale
-// La taille de chaine et son adresse doivent être
-// sur la pile.
+// Écris des octets dans un fichier.
+//
+// Utilisations :
+//    <taille octets> <adresse octets> <fichier> écris
+//    "Chaine littérale" <fichier> écris
+//
+// Retourne le nombre d'octets écris
 macro écris SYS_write appelsys3 fin
 
 // Quitte le programme avec le code de retour se
