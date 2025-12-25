@@ -1114,6 +1114,19 @@ compare_piles :: fonc (compilatrice: *Compilatrice, inst: *Instruction, pile1: [
 
     si piles_sont_similaires == faux {
         rapporte_erreur(compilatrice, inst.lexème, message)
+
+        imprimeln("Avant l'instruction :\n")
+        pour pile1 {
+            imprime("%, ", it.type)
+        }
+        imprime("\n")
+
+        imprimeln("Après l'instruction :\n")
+        pour pile2 {
+            imprime("%, ", it.type)
+        }
+        imprime("\n")
+
         exit(1)
     }
 }
