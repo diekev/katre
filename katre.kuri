@@ -1380,12 +1380,12 @@ valide_sémantique :: fonc (compilatrice: *Compilatrice, programme: *Programme)
                     exit(1)
                 }
 
-                si a.type != Type.ENTIER {
-                    rapporte_erreur(compilatrice, base.lexème, "requiers des types entier")
+                si a.type != Type.ENTIER && a.type != Type.BOOL {
+                    rapporte_erreur(compilatrice, base.lexème, "requiers des types entier ou booléens")
                     exit(1)
                 }
 
-                empile(*pile_cellules, Cellule(Type.ENTIER, base.lexème))
+                empile(*pile_cellules, Cellule(a.type, base.lexème))
             }
             OuInclusif {
                 garantie_taille_pile_min(compilatrice, pile_cellules, 2, base)
