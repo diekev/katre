@@ -1,68 +1,68 @@
-importe Chaine
-importe Fondation
-importe LigneDeCommande
-importe Math
-importe Numérique
-importe POSIX
-importe Processus
-importe SimpleLexage
-importe SysFichier
+importe Chaine;
+importe Fondation;
+importe LigneDeCommande;
+importe Math;
+importe Numérique;
+importe POSIX;
+importe Processus;
+importe SimpleLexage;
+importe SysFichier;
 
 // À FAIRE : documente les macros
 // À FAIRE : documente inclus
 // À FAIRE : permet de définir des macros depuis la ligne de commande
 
-CAPACITÉ_MÉMOIRE :: 640 * 1024
+CAPACITÉ_MÉMOIRE :: 640 * 1024;
 
 Commandes :: struct {
-    simule: bool
-    compile: bool
-    lance: bool
-    désassemble: bool
-    valide: bool
-    fichier: chaine @anonyme
+    simule: bool;
+    compile: bool;
+    lance: bool;
+    désassemble: bool;
+    valide: bool;
+    fichier: chaine @anonyme;
 }
 
 principale :: fonc ()
 {
-    succès, args, _ := parse_ligne_de_commande(Commandes)
+    succès, args, _ := parse_ligne_de_commande(Commandes);
     saufsi succès {
-        exit(1)
+        exit(1);
     }
 
     saufsi args.fichier {
-        imprimeln("Aucun fichier spécifié")
-        exit(1)
+        imprimeln("Aucun fichier spécifié");
+        exit(1);
     }
 
-    compilatrice: Compilatrice
+    compilatrice: Compilatrice;
 
-    succès_programme, programme := parse_programme(*compilatrice, args.fichier)
+    succès_programme, programme := parse_programme(*compilatrice, args.fichier);
     saufsi succès_programme {
-        exit(1)
+        exit(1);
     }
 
-    diffère détruit_données(*programme)
+    diffère détruit_données(*programme);
 
     saufsi renvoie_blocs(*compilatrice, *programme) {
-        exit(1)
+        exit(1);
     }
 
     si args.désassemble {
-        imprime_instructions(*programme)
+        imprime_instructions(*programme);
     }
 
     si args.valide {
-        valide_sémantique(*compilatrice, *programme)
+        valide_sémantique(*compilatrice, *programme);
     }
 
     si args.simule {
-        simule_programme(*programme)
+        simule_programme(*programme);
     }
 
     si args.compile {
-        nom_de_base := CheminFichier(args.fichier).nom_fichier()
-        compile_programme(*programme, nom_de_base, args.lance)
+        nom_de_base := CheminFichier(args.fichier).nom_fichier();
+        compile_programme(*programme, nom_de_base, args.lance);
     }
 }
 
@@ -71,383 +71,383 @@ principale :: fonc ()
  * \{ */
 
 ChaineConstante :: struct {
-    décalage: z64
-    taille: z64
+    décalage: z64;
+    taille: z64;
 }
 
 Macro :: struct {
-    lexème: Lexème
-    est_complète: bool
-    nom: chaine
-    insts: [..]octet
+    lexème: Lexème;
+    est_complète: bool;
+    nom: chaine;
+    insts: [..]octet;
 }
 
 Programme :: struct {
-    insts: [..]octet
-    macros: [..]*Macro
-    données_constantes: [..]octet
+    insts: [..]octet;
+    macros: [..]*Macro;
+    données_constantes: [..]octet;
 }
 
 détruit_données :: fonc (empl programme: *Programme)
 {
-    déloge(macros)
-    déloge(données_constantes)
-    déloge(insts)
+    déloge(macros);
+    déloge(données_constantes);
+    déloge(insts);
 }
 
 ajoute_chaine :: fonc (empl programme: *Programme, chn: chaine) -> ChaineConstante
 {
-    résultat: ChaineConstante = ---
-    résultat.décalage = données_constantes.taille
+    résultat: ChaineConstante = ---;
+    résultat.décalage = données_constantes.taille;
 
-    octets_chn : []octet = chn
-    tableau_ajoute(*données_constantes, ...octets_chn)
+    octets_chn : []octet = chn;
+    tableau_ajoute(*données_constantes, ...octets_chn);
 
     // Remplace les caractères échappés
-    début := données_constantes.pointeur + résultat.décalage
-    fin := données_constantes.pointeur + données_constantes.taille
-    entrée := début
-    sortie := début
+    début := données_constantes.pointeur + résultat.décalage;
+    fin := données_constantes.pointeur + données_constantes.taille;
+    entrée := début;
+    sortie := début;
 
     tantque entrée < fin {
-        c := mémoire(entrée)
+        c := mémoire(entrée);
 
         si c comme z8 == '\\' {
-            entrée += 1
+            entrée += 1;
             si entrée < fin {
-                c1 := mémoire(entrée)
-                c = donne_caractère_échappé(c1 comme z8) comme octet
+                c1 := mémoire(entrée);
+                c = donne_caractère_échappé(c1 comme z8) comme octet;
             }
         }
 
-        mémoire(sortie) = c
-        sortie += 1
-        entrée += 1
+        mémoire(sortie) = c;
+        sortie += 1;
+        entrée += 1;
     }
 
-    données_constantes.taille = sortie - données_constantes.pointeur
-    résultat.taille = sortie - début
+    données_constantes.taille = sortie - données_constantes.pointeur;
+    résultat.taille = sortie - début;
 
-    retourne résultat
+    retourne résultat;
 }
 
 donne_caractère_échappé :: fonc (c: z8) -> z8
 {
     si c == 'n' {
-        retourne '\n'
+        retourne '\n';
     }
     si c == 't' {
-        retourne '\t'
+        retourne '\t';
     }
     si c == 'v' {
-        retourne '\v'
+        retourne '\v';
     }
     si c == 'f' {
-        retourne '\f'
+        retourne '\f';
     }
     si '0' <= c <= '9' {
-        retourne c - '0'
+        retourne c - '0';
     }
 
-    retourne c
+    retourne c;
 }
 
 donne_chaine :: fonc (programme: *Programme, chn: ChaineConstante) -> chaine
 {
-    résultat: chaine = ---
+    résultat: chaine = ---;
     // À FAIRE : valide la chaine
-    résultat.pointeur = (programme.données_constantes.pointeur + chn.décalage) comme *z8
-    résultat.taille = chn.taille
-    retourne résultat
+    résultat.pointeur = (programme.données_constantes.pointeur + chn.décalage) comme *z8;
+    résultat.taille = chn.taille;
+    retourne résultat;
 }
 
 donne_macro :: fonc (programme: *Programme, nom: chaine) -> *Macro
 {
     pour programme.macros {
         si it.nom == nom {
-            retourne it
+            retourne it;
         }
     }
-    retourne nul
+    retourne nul;
 }
 
 FichierSource :: struct {
-    chemin: chaine
-    contenu: chaine
-    lexeuse: SimpleLexeuse
+    chemin: chaine;
+    contenu: chaine;
+    lexeuse: SimpleLexeuse;
 }
 
 Compilatrice :: struct {
-    programme: *Programme
-    possède_erreur: bool
-    fichiers: [..]*FichierSource
-    pile_fichiers: [..]*FichierSource
-    macros_courantes: [..]*Macro
+    programme: *Programme;
+    possède_erreur: bool;
+    fichiers: [..]*FichierSource;
+    pile_fichiers: [..]*FichierSource;
+    macros_courantes: [..]*Macro;
 
-    profondeur: z32
+    profondeur: z32;
 }
 
-commentaires_ligne_singulière := ["//"]
-commentaires_multi_lignes := [ ["/*", "*/"] ]
-ponctuations := ["+", "-", "*", ".", ",", "=", "!=", ">", "<", ">=", "<=", "<<", ">>", "&", "|", "^"]
-mots_clés := ["dup", "si", "sinon", "fin", "tantque", "fais", "mem", "cliche", "lâche", "appelsys1", "appelsys2", "appelsys3", "permute", "enjambe", "macro", "inclus", "divmod"]
+commentaires_ligne_singulière := ["//"];
+commentaires_multi_lignes := [ ["/*", "*/"] ];
+ponctuations := ["+", "-", "*", ".", ",", "=", "!=", ">", "<", ">=", "<=", "<<", ">>", "&", "|", "^"];
+mots_clés := ["dup", "si", "sinon", "fin", "tantque", "fais", "mem", "cliche", "lâche", "appelsys1", "appelsys2", "appelsys3", "permute", "enjambe", "macro", "inclus", "divmod"];
 
 ouvre_fichier :: fonc (compilatrice: *Compilatrice, chemin: chaine) -> *FichierSource
 {
-    succès_fichier, contenu := contenu_fichier_texte(chemin)
+    succès_fichier, contenu := contenu_fichier_texte(chemin);
     saufsi succès_fichier {
-        retourne nul
+        retourne nul;
     }
 
-    résultat := loge(FichierSource)
-    résultat.chemin = chemin
-    résultat.contenu = contenu
+    résultat := loge(FichierSource);
+    résultat.chemin = chemin;
+    résultat.contenu = contenu;
 
-    résultat.lexeuse.commentaires_ligne_singulière = commentaires_ligne_singulière
-    résultat.lexeuse.commentaires_multi_lignes = commentaires_multi_lignes
-    résultat.lexeuse.ponctuations = ponctuations
-    résultat.lexeuse.mots_clés = mots_clés
-    résultat.lexeuse.apostrophe_est_caractère_constant = vrai
+    résultat.lexeuse.commentaires_ligne_singulière = commentaires_ligne_singulière;
+    résultat.lexeuse.commentaires_multi_lignes = commentaires_multi_lignes;
+    résultat.lexeuse.ponctuations = ponctuations;
+    résultat.lexeuse.mots_clés = mots_clés;
+    résultat.lexeuse.apostrophe_est_caractère_constant = vrai;
 
-    initialise_lexeuse_pour_texte(*résultat.lexeuse, contenu)
+    initialise_lexeuse_pour_texte(*résultat.lexeuse, contenu);
 
-    tableau_ajoute(*compilatrice.fichiers, résultat)
+    tableau_ajoute(*compilatrice.fichiers, résultat);
 
-    retourne résultat
+    retourne résultat;
 }
 
 inclus_fichier :: fonc (compilatrice: *Compilatrice, lexème: Lexème)
 {
-    nom := donne_texte(lexème)
+    nom := donne_texte(lexème);
 
     si est_un_fichier_régulier(CheminFichier(nom)) {
-        ouvre_et_empile_fichier(compilatrice, lexème, nom)
-        retourne
+        ouvre_et_empile_fichier(compilatrice, lexème, nom);
+        retourne;
     }
 
-    chemin_bibliothèques := enchaine("bibliothèques/", nom)
+    chemin_bibliothèques := enchaine("bibliothèques/", nom);
     si est_un_fichier_régulier(CheminFichier(chemin_bibliothèques)) {
-        ouvre_et_empile_fichier(compilatrice, lexème, chemin_bibliothèques)
-        retourne
+        ouvre_et_empile_fichier(compilatrice, lexème, chemin_bibliothèques);
+        retourne;
     }
 
-    rapporte_erreur(compilatrice, lexème, "impossible de trouver le fichier à inclure")
+    rapporte_erreur(compilatrice, lexème, "impossible de trouver le fichier à inclure");
 }
 
 ouvre_et_empile_fichier :: fonc (compilatrice: *Compilatrice, lexème: Lexème, chemin: chaine)
 {
-    fichier := ouvre_fichier(compilatrice, chemin)
+    fichier := ouvre_fichier(compilatrice, chemin);
     si fichier {
-        tableau_ajoute(*compilatrice.pile_fichiers, fichier)
-        retourne
+        tableau_ajoute(*compilatrice.pile_fichiers, fichier);
+        retourne;
     }
-    rapporte_erreur(compilatrice, lexème, "impossible d'ouvrir le fichier à inclure")
+    rapporte_erreur(compilatrice, lexème, "impossible d'ouvrir le fichier à inclure");
 }
 
 donne_fichier_courant :: fonc (empl compilatrice: *Compilatrice) -> *FichierSource
 {
-    retourne pile_fichiers[pile_fichiers.taille - 1]
+    retourne pile_fichiers[pile_fichiers.taille - 1];
 }
 
 rapporte_erreur :: fonc (compilatrice: *Compilatrice, lexème: Lexème, format: chaine, args: ...eini)
 {
-    compilatrice.possède_erreur = vrai
-    rapporte_diagnostique(compilatrice, TypeDiagnostique.ERREUR, lexème, format, ...args)
+    compilatrice.possède_erreur = vrai;
+    rapporte_diagnostique(compilatrice, TypeDiagnostique.ERREUR, lexème, format, ...args);
 } @Imprimeuse
 
 rapporte_note :: fonc (compilatrice: *Compilatrice, lexème: Lexème, format: chaine, args: ...eini)
 {
-    rapporte_diagnostique(compilatrice, TypeDiagnostique.NOTE, lexème, format, ...args)
+    rapporte_diagnostique(compilatrice, TypeDiagnostique.NOTE, lexème, format, ...args);
 } @Imprimeuse
 
 TypeDiagnostique :: énum {
-    ERREUR
-    ERREUR_INTERNE
-    AVERTISSEMENT
-    NOTE
+    ERREUR;
+    ERREUR_INTERNE;
+    AVERTISSEMENT;
+    NOTE;
 }
 
 rapporte_diagnostique :: fonc (compilatrice: *Compilatrice, type: TypeDiagnostique, lexème: Lexème, format: chaine, args: ...eini)
 {
-    couleur: chaine = ---
-    intitulé: chaine = ---
+    couleur: chaine = ---;
+    intitulé: chaine = ---;
     discr type {
         ERREUR {
-            couleur = "\x1b[31m"
-            intitulé = "erreur"
+            couleur = "\x1b[31m";
+            intitulé = "erreur";
         }
         ERREUR_INTERNE {
-            couleur = "\x1b[31m"
-            intitulé = "erreur interne"
+            couleur = "\x1b[31m";
+            intitulé = "erreur interne";
         }
         AVERTISSEMENT {
-            couleur = "\x1b[35m"
-            intitulé = "avertissement"
+            couleur = "\x1b[35m";
+            intitulé = "avertissement";
         }
         NOTE {
-            couleur = "\x1b[36m"
-            intitulé = "note"
+            couleur = "\x1b[36m";
+            intitulé = "note";
         }
         sinon {
-            couleur = "\x1b[31m"
-            intitulé = "erreur inconnue"
+            couleur = "\x1b[31m";
+            intitulé = "erreur inconnue";
         }
     }
 
-    donne_fichier_pour_lexème :: fonc (compilatrice: *Compilatrice, lexème: Lexème) -> *FichierSource
+    donne_fichier_pour_lexème :: fonc (compilatrice: *Compilatrice, lexème: Lexème) -> *FichierSource;
     {
         // À FAIRE : stocke le fichier dans le lexème
         si lexème.type == TypeLexème.FinDeFichier {
-            retourne donne_fichier_courant(compilatrice)
+            retourne donne_fichier_courant(compilatrice);
         }
 
-        texte_lexème := donne_texte(lexème)
+        texte_lexème := donne_texte(lexème);
 
         pour compilatrice.fichiers {
-            début_fichier := it.contenu.pointeur
-            fin_fichier := it.contenu.pointeur + it.contenu.taille
+            début_fichier := it.contenu.pointeur;
+            fin_fichier := it.contenu.pointeur + it.contenu.taille;
             si début_fichier <= texte_lexème.pointeur < fin_fichier {
-                retourne it
+                retourne it;
             }
         }
 
-        panique("Le lexème ne se trouve dans aucun fichier.")
+        panique("Le lexème ne se trouve dans aucun fichier.");
     }
 
-    fichier := donne_fichier_pour_lexème(compilatrice, lexème)
+    fichier := donne_fichier_pour_lexème(compilatrice, lexème);
 
-    texte_lexème: chaine
+    texte_lexème: chaine;
     si lexème.type == TypeLexème.FinDeFichier {
-        texte_lexème = avance(fichier.contenu, fichier.contenu.taille - 1)
+        texte_lexème = avance(fichier.contenu, fichier.contenu.taille - 1);
     }
     sinon {
-        texte_lexème = donne_texte(lexème)
+        texte_lexème = donne_texte(lexème);
     }
 
-    texte_ligne := donne_ligne_pour_erreur(fichier.contenu, texte_lexème)
+    texte_ligne := donne_ligne_pour_erreur(fichier.contenu, texte_lexème);
 
     // À FAIRE : UTF-8
-    numéro_ligne : n64 = 1
+    numéro_ligne : n64 = 1;
     {
-        début := fichier.contenu.pointeur
-        fin := texte_ligne.pointeur
+        début := fichier.contenu.pointeur;
+        fin := texte_ligne.pointeur;
 
         tantque début < fin {
             si mémoire(début) == '\n' {
-                numéro_ligne += 1
+                numéro_ligne += 1;
             }
-            début += 1
+            début += 1;
         }
     }
-    numéro_colonne : n64 = 1 + (texte_lexème.pointeur - texte_ligne.pointeur) comme n64
-    numéro_colonne_fin : n64 = numéro_colonne + texte_lexème.taille comme n64
+    numéro_colonne : n64 = 1 + (texte_lexème.pointeur - texte_ligne.pointeur) comme n64;
+    numéro_colonne_fin : n64 = numéro_colonne + texte_lexème.taille comme n64;
 
-    imprime("\x1b[1m%:%:% ", fichier.chemin, numéro_ligne, numéro_colonne)
-    imprime("%% : \x1b[00m", couleur, intitulé)
-    imprimeln(format, ...args)
+    imprime("\x1b[1m%:%:% ", fichier.chemin, numéro_ligne, numéro_colonne);
+    imprime("%% : \x1b[00m", couleur, intitulé);
+    imprimeln(format, ...args);
 
-    assert(numéro_colonne > 0)
+    assert(numéro_colonne > 0);
 
-    largeur_numéro_ligne := magnitude_décimale(numéro_ligne)
-    largeur_goutière := max(6 comme n64, largeur_numéro_ligne + 2)
+    largeur_numéro_ligne := magnitude_décimale(numéro_ligne);
+    largeur_goutière := max(6 comme n64, largeur_numéro_ligne + 2);
 
     pour largeur_goutière - largeur_numéro_ligne - 1 {
-        imprime(" ")
+        imprime(" ");
     }
 
-    imprime("% | ", numéro_ligne)
+    imprime("% | ", numéro_ligne);
 
     si type != TypeDiagnostique.NOTE {
-        texte_avant_erreur := texte_ligne
-        texte_avant_erreur.taille = numéro_colonne comme z64 - 1
+        texte_avant_erreur := texte_ligne;
+        texte_avant_erreur.taille = numéro_colonne comme z64 - 1;
 
         si texte_avant_erreur {
-            imprime("%", texte_avant_erreur)
+            imprime("%", texte_avant_erreur);
         }
 
-        texte_à_surligner := avance(texte_ligne, numéro_colonne comme z64 - 1)
-        texte_à_surligner.taille = (numéro_colonne_fin - numéro_colonne) comme z64
+        texte_à_surligner := avance(texte_ligne, numéro_colonne comme z64 - 1);
+        texte_à_surligner.taille = (numéro_colonne_fin - numéro_colonne) comme z64;
 
-        imprime("\x1b[1m%%\x1b[00m", couleur, texte_à_surligner)
+        imprime("\x1b[1m%%\x1b[00m", couleur, texte_à_surligner);
 
-        texte_restant := avance(texte_ligne, numéro_colonne_fin comme z64 - 1)
+        texte_restant := avance(texte_ligne, numéro_colonne_fin comme z64 - 1);
 
-        imprimeln("%", texte_restant)
+        imprimeln("%", texte_restant);
     }
     sinon {
-        imprimeln("%", texte_ligne)
+        imprimeln("%", texte_ligne);
     }
 
-    imprime_gouttière(largeur_goutière)
+    imprime_gouttière(largeur_goutière);
 
     si type != TypeDiagnostique.NOTE {
         pour numéro_colonne - 1 {
             si texte_ligne[it] == '\t' {
-                imprime("\t")
+                imprime("\t");
             }
             sinon {
-                imprime(" ")
+                imprime(" ");
             }
         }
-        imprime("\x1b[1m%^", couleur)
+        imprime("\x1b[1m%^", couleur);
         // À FAIRE(langage) : sousbordement pour les nombres naturels
         si numéro_colonne_fin > numéro_colonne + 1 {
             pour numéro_colonne + 1 ... numéro_colonne_fin - 1 {
-                imprime("~")
+                imprime("~");
             }
         }
     }
-    imprime("\x1b[00m\n")
+    imprime("\x1b[00m\n");
 } @Imprimeuse
 
 // @copié de JSON
 donne_ligne_pour_erreur :: fonc (texte: chaine, mot: chaine) -> chaine
 {
-    début := texte.pointeur
-    fin := texte.pointeur + texte.taille
-    ptr_position := mot.pointeur
+    début := texte.pointeur;
+    fin := texte.pointeur + texte.taille;
+    ptr_position := mot.pointeur;
 
     saufsi début <= ptr_position < fin {
-        retourne ""
+        retourne "";
     }
 
-    ptr_début_ligne := ptr_position
+    ptr_début_ligne := ptr_position;
     tantque ptr_début_ligne > début {
         si mémoire(ptr_début_ligne) == '\n' {
-            ptr_début_ligne += 1
-            arrête
+            ptr_début_ligne += 1;
+            arrête;
         }
-        ptr_début_ligne -= 1
+        ptr_début_ligne -= 1;
     }
 
-    ptr_fin_ligne := ptr_début_ligne
+    ptr_fin_ligne := ptr_début_ligne;
     tantque ptr_fin_ligne < fin {
         si mémoire(ptr_fin_ligne) == '\n' {
-            arrête
+            arrête;
         }
-        ptr_fin_ligne += 1
+        ptr_fin_ligne += 1;
     }
 
-    résultat := chaine(ptr_début_ligne, ptr_fin_ligne - ptr_début_ligne)
-    retourne résultat
+    résultat := chaine(ptr_début_ligne, ptr_fin_ligne - ptr_début_ligne);
+    retourne résultat;
 }
 
 imprime_gouttière :: fonc (largeur: n64)
 {
     pour largeur {
-        imprime(" ")
+        imprime(" ");
     }
-    imprime("| ")
+    imprime("| ");
 }
 
 imprime_espaces_pour_texte :: fonc (texte: chaine)
 {
     pour texte {
         si it == '\t' {
-            imprime("\t")
+            imprime("\t");
         }
         sinon {
-            imprime(" ")
+            imprime(" ");
         }
     }
 }
@@ -455,258 +455,258 @@ imprime_espaces_pour_texte :: fonc (texte: chaine)
 imprime_tildes_pour_texte :: fonc (texte: chaine)
 {
     pour texte {
-        imprime("~")
+        imprime("~");
     }
 }
 
 parse_programme :: fonc (compilatrice: *Compilatrice, chemin: chaine) -> (bool, Programme)
 {
-    résultat: Programme
+    résultat: Programme;
 
-    fichier_programme := ouvre_fichier(compilatrice, chemin)
+    fichier_programme := ouvre_fichier(compilatrice, chemin);
     saufsi fichier_programme {
-        retourne faux, résultat
+        retourne faux, résultat;
     }
-    tableau_ajoute(*compilatrice.pile_fichiers, fichier_programme)
+    tableau_ajoute(*compilatrice.pile_fichiers, fichier_programme);
 
     tantque compilatrice.pile_fichiers && !compilatrice.possède_erreur {
-        fichier_courant := donne_fichier_courant(compilatrice)
-        lexeuse := *fichier_courant.lexeuse
+        fichier_courant := donne_fichier_courant(compilatrice);
+        lexeuse := *fichier_courant.lexeuse;
 
-        lexème := donne_lexème_suivant(lexeuse)
+        lexème := donne_lexème_suivant(lexeuse);
         si lexème.type == TypeLexème.FinDeFichier {
-            compilatrice.pile_fichiers.taille -= 1
-            continue
+            compilatrice.pile_fichiers.taille -= 1;
+            continue;
         }
 
         si est_mot_clé(lexème, "macro") {
             saufsi parse_macro(compilatrice, *résultat, lexeuse) {
-                retourne faux, résultat
+                retourne faux, résultat;
             }
-            continue
+            continue;
         }
 
         si est_mot_clé(lexème, "inclus") {
-            lexème = donne_lexème_suivant(lexeuse)
+            lexème = donne_lexème_suivant(lexeuse);
 
             saufsi lexème.type == TypeLexème.ChaineLittérale {
-                rapporte_erreur(compilatrice, lexème, "attendu une chaine littérale après 'inclus'")
-                arrête
+                rapporte_erreur(compilatrice, lexème, "attendu une chaine littérale après 'inclus'");
+                arrête;
             }
 
-            inclus_fichier(compilatrice, lexème)
-            continue
+            inclus_fichier(compilatrice, lexème);
+            continue;
         }
 
         saufsi émets_instruction(compilatrice, *résultat, *résultat.insts, lexème) {
-            retourne faux, résultat
+            retourne faux, résultat;
         }
     }
 
-    retourne !compilatrice.possède_erreur, résultat
+    retourne !compilatrice.possède_erreur, résultat;
 }
 
 parse_macro :: fonc (compilatrice: *Compilatrice, programme: *Programme, lexeuse: *SimpleLexeuse) -> bool
 {
-    lexème := donne_lexème_suivant(lexeuse)
+    lexème := donne_lexème_suivant(lexeuse);
     saufsi lexème.type == TypeLexème.Symbole {
-        rapporte_erreur(compilatrice, lexème, "attendu un symbole après 'macro'")
-        retourne faux
+        rapporte_erreur(compilatrice, lexème, "attendu un symbole après 'macro'");
+        retourne faux;
     }
 
-    nom_macro := donne_texte(lexème)
+    nom_macro := donne_texte(lexème);
 
-    macro_existante := donne_macro(programme, nom_macro)
+    macro_existante := donne_macro(programme, nom_macro);
     si macro_existante {
-        rapporte_erreur(compilatrice, lexème, "redéfinition de la macro '%'", nom_macro)
-        rapporte_note(compilatrice, macro_existante.lexème, "la macro '%' fut définie ici", nom_macro)
-        retourne faux
+        rapporte_erreur(compilatrice, lexème, "redéfinition de la macro '%'", nom_macro);
+        rapporte_note(compilatrice, macro_existante.lexème, "la macro '%' fut définie ici", nom_macro);
+        retourne faux;
     }
 
-    macro := loge(Macro)
-    macro.nom = nom_macro
-    macro.lexème = lexème
+    macro := loge(Macro);
+    macro.nom = nom_macro;
+    macro.lexème = lexème;
 
-    tableau_ajoute(*programme.macros, macro)
+    tableau_ajoute(*programme.macros, macro);
 
     // À FAIRE : macros dans les macros
-    tableau_ajoute(*compilatrice.macros_courantes, macro)
-    diffère compilatrice.macros_courantes.taille -= 1
+    tableau_ajoute(*compilatrice.macros_courantes, macro);
+    diffère compilatrice.macros_courantes.taille -= 1;
 
     boucle {
-        lexème = donne_lexème_suivant(lexeuse)
+        lexème = donne_lexème_suivant(lexeuse);
         si lexème.type == TypeLexème.FinDeFichier {
-            rapporte_erreur(compilatrice, lexème, "fin de fichier inattendu")
-            retourne faux
+            rapporte_erreur(compilatrice, lexème, "fin de fichier inattendu");
+            retourne faux;
         }
 
         si est_mot_clé(lexème, "fin") && compilatrice.profondeur == 0 {
-            arrête
+            arrête;
         }
 
         saufsi émets_instruction(compilatrice, programme, *macro.insts, lexème) {
-            retourne faux
+            retourne faux;
         }
     }
 
-    macro.est_complète = vrai
+    macro.est_complète = vrai;
 
-    retourne vrai
+    retourne vrai;
 }
 
 émets_instruction :: fonc (compilatrice: *Compilatrice, programme: *Programme, insts: *[..]octet, lexème: Lexème) -> bool
 {
     si lexème.type == TypeLexème.Nombre {
-        nombre := lexème.nombre.naturel comme z64
-        émets(insts, NombreEntier, lexème, nombre)
+        nombre := lexème.nombre.naturel comme z64;
+        émets(insts, NombreEntier, lexème, nombre);
     }
     sinon si lexème.type == TypeLexème.ChaineLittérale {
-        chaine_constante := ajoute_chaine(programme, donne_texte(lexème))
-        émets(insts, ChaineLittérale, lexème, chaine_constante)
+        chaine_constante := ajoute_chaine(programme, donne_texte(lexème));
+        émets(insts, ChaineLittérale, lexème, chaine_constante);
     }
     sinon si lexème.type == TypeLexème.CaractèreConstant {
-        texte := donne_texte(lexème)
-        valeur: z64
+        texte := donne_texte(lexème);
+        valeur: z64;
         si texte.taille == 1 {
-            valeur = texte[0]
+            valeur = texte[0];
         }
         sinon si texte.taille == 2 {
             si texte[0] == '\\' {
-                valeur = donne_caractère_échappé(texte[1])
+                valeur = donne_caractère_échappé(texte[1]);
             }
             sinon {
-                rapporte_erreur(compilatrice, lexème, "constante de caractère invalide")
+                rapporte_erreur(compilatrice, lexème, "constante de caractère invalide");
             }
         }
         sinon {
-            rapporte_erreur(compilatrice, lexème, "constante de caractère invalide")
+            rapporte_erreur(compilatrice, lexème, "constante de caractère invalide");
         }
 
-        émets(insts, NombreEntier, lexème, valeur)
+        émets(insts, NombreEntier, lexème, valeur);
     }
     sinon si est_ponctuation(lexème, "+") {
-        émets(insts, Ajoute, lexème)
+        émets(insts, Ajoute, lexème);
     }
     sinon si est_ponctuation(lexème, "-") {
-        émets(insts, Soustrait, lexème)
+        émets(insts, Soustrait, lexème);
     }
     sinon si est_ponctuation(lexème, "*") {
-        émets(insts, Multiplie, lexème)
+        émets(insts, Multiplie, lexème);
     }
     sinon si est_mot_clé(lexème, "divmod") {
-        émets(insts, DivMod, lexème)
+        émets(insts, DivMod, lexème);
     }
     sinon si est_mot_clé(lexème, "cliche") {
-        émets(insts, Cliche, lexème)
+        émets(insts, Cliche, lexème);
     }
     sinon si est_ponctuation(lexème, "=") {
-        émets(insts, Égal, lexème)
+        émets(insts, Égal, lexème);
     }
     sinon si est_ponctuation(lexème, "!=") {
-        émets(insts, Inégal, lexème)
+        émets(insts, Inégal, lexème);
     }
     sinon si est_ponctuation(lexème, "<") {
-        émets(insts, Inférieur, lexème)
+        émets(insts, Inférieur, lexème);
     }
     sinon si est_ponctuation(lexème, ">") {
-        émets(insts, Supérieur, lexème)
+        émets(insts, Supérieur, lexème);
     }
     sinon si est_ponctuation(lexème, "<=") {
-        émets(insts, InférieurÉgal, lexème)
+        émets(insts, InférieurÉgal, lexème);
     }
     sinon si est_ponctuation(lexème, ">=") {
-        émets(insts, SupérieurÉgal, lexème)
+        émets(insts, SupérieurÉgal, lexème);
     }
     sinon si est_ponctuation(lexème, "<<") {
-        émets(insts, DécalageGauche, lexème)
+        émets(insts, DécalageGauche, lexème);
     }
     sinon si est_ponctuation(lexème, ">>") {
-        émets(insts, DécalageDroite, lexème)
+        émets(insts, DécalageDroite, lexème);
     }
     sinon si est_ponctuation(lexème, "&") {
-        émets(insts, EtBinaire, lexème)
+        émets(insts, EtBinaire, lexème);
     }
     sinon si est_ponctuation(lexème, "|") {
-        émets(insts, OuInclusif, lexème)
+        émets(insts, OuInclusif, lexème);
     }
     sinon si est_ponctuation(lexème, "^") {
-        émets(insts, OuExclusif, lexème)
+        émets(insts, OuExclusif, lexème);
     }
     sinon si est_ponctuation(lexème, ".") {
-        émets(insts, ÉcrisMem, lexème)
+        émets(insts, ÉcrisMem, lexème);
     }
     sinon si est_ponctuation(lexème, ",") {
-        émets(insts, LisMem, lexème)
+        émets(insts, LisMem, lexème);
     }
     sinon si est_mot_clé(lexème, "dup") {
-        émets(insts, Duplique, lexème)
+        émets(insts, Duplique, lexème);
     }
     sinon si est_mot_clé(lexème, "si") {
-        compilatrice.profondeur += 1
-        émets(insts, Si, lexème)
+        compilatrice.profondeur += 1;
+        émets(insts, Si, lexème);
     }
     sinon si est_mot_clé(lexème, "sinon") {
-        émets(insts, Sinon, lexème)
+        émets(insts, Sinon, lexème);
     }
     sinon si est_mot_clé(lexème, "fin") {
-        compilatrice.profondeur -= 1
-        émets(insts, Fin, lexème)
+        compilatrice.profondeur -= 1;
+        émets(insts, Fin, lexème);
     }
     sinon si est_mot_clé(lexème, "tantque") {
-        compilatrice.profondeur += 1
-        émets(insts, Tantque, lexème)
+        compilatrice.profondeur += 1;
+        émets(insts, Tantque, lexème);
     }
     sinon si est_mot_clé(lexème, "fais") {
-        émets(insts, Fais, lexème)
+        émets(insts, Fais, lexème);
     }
     sinon si est_mot_clé(lexème, "mem") {
-        émets(insts, Mem, lexème)
+        émets(insts, Mem, lexème);
     }
     sinon si est_mot_clé(lexème, "appelsys1") {
-        émets(insts, AppelSys1, lexème)
+        émets(insts, AppelSys1, lexème);
     }
     sinon si est_mot_clé(lexème, "appelsys2") {
-        émets(insts, AppelSys2, lexème)
+        émets(insts, AppelSys2, lexème);
     }
     sinon si est_mot_clé(lexème, "appelsys3") {
-        émets(insts, AppelSys3, lexème)
+        émets(insts, AppelSys3, lexème);
     }
     sinon si est_mot_clé(lexème, "lâche") {
-        émets(insts, Lâche, lexème)
+        émets(insts, Lâche, lexème);
     }
     sinon si est_mot_clé(lexème, "permute") {
-        émets(insts, Permute, lexème)
+        émets(insts, Permute, lexème);
     }
     sinon si est_mot_clé(lexème, "enjambe") {
-        émets(insts, Enjambe, lexème)
+        émets(insts, Enjambe, lexème);
     }
     sinon {
         si lexème.type == TypeLexème.Symbole {
-            symbole := donne_texte(lexème)
+            symbole := donne_texte(lexème);
 
-            macro := donne_macro(programme, symbole)
+            macro := donne_macro(programme, symbole);
             si macro {
                 saufsi macro.est_complète {
-                    rapporte_erreur(compilatrice, lexème, "tentative d'utiliser la macro '%' alors qu'elle n'est pas complète", macro.nom)
+                    rapporte_erreur(compilatrice, lexème, "tentative d'utiliser la macro '%' alors qu'elle n'est pas complète", macro.nom);
                 
-                    macro_courante := compilatrice.macros_courantes[compilatrice.macros_courantes.taille - 1]
+                    macro_courante := compilatrice.macros_courantes[compilatrice.macros_courantes.taille - 1];
                     si macro_courante != macro {
-                        rapporte_note(compilatrice, macro.lexème, "la macro '%' fut définie ici", macro.nom)
+                        rapporte_note(compilatrice, macro.lexème, "la macro '%' fut définie ici", macro.nom);
                     }
 
-                    retourne vrai
+                    retourne vrai;
                 }
                 // À FAIRE : peut-être dévrions attendre pour développer la macro
-                tableau_ajoute(insts, ...macro.insts)
-                retourne vrai
+                tableau_ajoute(insts, ...macro.insts);
+                retourne vrai;
             }
         }
 
-        rapporte_erreur(compilatrice, lexème, "lexème inattendu")
-        retourne faux
+        rapporte_erreur(compilatrice, lexème, "lexème inattendu");
+        retourne faux;
     }
 
-    retourne vrai
+    retourne vrai;
 }
 
 /** \} */
@@ -716,241 +716,241 @@ parse_macro :: fonc (compilatrice: *Compilatrice, programme: *Programme, lexeuse
  * \{ */
 
 Instruction :: struct {
-    genre: type_de_données
-    lexème: Lexème
+    genre: type_de_données;
+    lexème: Lexème;
 }
 
 ajoute_instruction :: fonc (flux: *[..]octet, inst: []octet)
 {
-    tableau_ajoute(flux, ...inst)
+    tableau_ajoute(flux, ...inst);
 }
 
 émets :: fonc (insts: *[..]octet, $T: type_de_données, lexème: Lexème, arg: ChaineConstante)
 {
-    inst: T
-    inst.lexème = lexème
-    inst.chaine_constante = arg
-    ajoute_instruction(insts, inst)
+    inst: T;
+    inst.lexème = lexème;
+    inst.chaine_constante = arg;
+    ajoute_instruction(insts, inst);
 }
 
 émets :: fonc (insts: *[..]octet, $T: type_de_données, lexème: Lexème, arg: z64)
 {
-    inst: T
-    inst.lexème = lexème
-    inst.arg = arg
-    ajoute_instruction(insts, inst)
+    inst: T;
+    inst.lexème = lexème;
+    inst.arg = arg;
+    ajoute_instruction(insts, inst);
 }
 
 émets :: fonc (insts: *[..]octet, $T: type_de_données, lexème: Lexème, arg: *Macro)
 {
-    inst: T
-    inst.lexème = lexème
-    inst.macro = arg
-    ajoute_instruction(insts, inst)
+    inst: T;
+    inst.lexème = lexème;
+    inst.macro = arg;
+    ajoute_instruction(insts, inst);
 }
 
 émets :: fonc (insts: *[..]octet, $T: type_de_données, lexème: Lexème)
 {
-    inst: T
-    inst.lexème = lexème
-    ajoute_instruction(insts, inst)
+    inst: T;
+    inst.lexème = lexème;
+    ajoute_instruction(insts, inst);
 }
 
 NombreEntier :: struct {
-    empl base: Instruction
-    genre = #type_de_cette_structure
+    empl base: Instruction;
+    genre = #type_de_cette_structure;
 
-    arg: z64
+    arg: z64;
 }
 
 ChaineLittérale :: struct {
-    empl base: Instruction
-    genre = #type_de_cette_structure
+    empl base: Instruction;
+    genre = #type_de_cette_structure;
 
-    chaine_constante: ChaineConstante
+    chaine_constante: ChaineConstante;
 }
 
 Ajoute :: struct {
-    empl base: Instruction
-    genre = #type_de_cette_structure
+    empl base: Instruction;
+    genre = #type_de_cette_structure;
 }
 
 Soustrait :: struct {
-    empl base: Instruction
-    genre = #type_de_cette_structure
+    empl base: Instruction;
+    genre = #type_de_cette_structure;
 }
 
 Multiplie :: struct {
-    empl base: Instruction
-    genre = #type_de_cette_structure
+    empl base: Instruction;
+    genre = #type_de_cette_structure;
 }
 
 DivMod :: struct {
-    empl base: Instruction
-    genre = #type_de_cette_structure
+    empl base: Instruction;
+    genre = #type_de_cette_structure;
 }
 
 Inférieur :: struct {
-    empl base: Instruction
-    genre = #type_de_cette_structure
+    empl base: Instruction;
+    genre = #type_de_cette_structure;
 }
 
 Supérieur :: struct {
-    empl base: Instruction
-    genre = #type_de_cette_structure
+    empl base: Instruction;
+    genre = #type_de_cette_structure;
 }
 
 InférieurÉgal :: struct {
-    empl base: Instruction
-    genre = #type_de_cette_structure
+    empl base: Instruction;
+    genre = #type_de_cette_structure;
 }
 
 SupérieurÉgal :: struct {
-    empl base: Instruction
-    genre = #type_de_cette_structure
+    empl base: Instruction;
+    genre = #type_de_cette_structure;
 }
 
 DécalageDroite :: struct {
-    empl base: Instruction
-    genre = #type_de_cette_structure
+    empl base: Instruction;
+    genre = #type_de_cette_structure;
 }
 
 DécalageGauche :: struct {
-    empl base: Instruction
-    genre = #type_de_cette_structure
+    empl base: Instruction;
+    genre = #type_de_cette_structure;
 }
 
 EtBinaire :: struct {
-    empl base: Instruction
-    genre = #type_de_cette_structure
+    empl base: Instruction;
+    genre = #type_de_cette_structure;
 }
 
 OuInclusif :: struct {
-    empl base: Instruction
-    genre = #type_de_cette_structure
+    empl base: Instruction;
+    genre = #type_de_cette_structure;
 }
 
 OuExclusif :: struct {
-    empl base: Instruction
-    genre = #type_de_cette_structure
+    empl base: Instruction;
+    genre = #type_de_cette_structure;
 }
 
 Cliche :: struct {
-    empl base: Instruction
-    genre = #type_de_cette_structure
+    empl base: Instruction;
+    genre = #type_de_cette_structure;
 }
 
 Duplique :: struct {
-    empl base: Instruction
-    genre = #type_de_cette_structure
+    empl base: Instruction;
+    genre = #type_de_cette_structure;
 }
 
 Permute :: struct {
-    empl base: Instruction
-    genre = #type_de_cette_structure
+    empl base: Instruction;
+    genre = #type_de_cette_structure;
 }
 
 Enjambe :: struct {
-    empl base: Instruction
-    genre = #type_de_cette_structure
+    empl base: Instruction;
+    genre = #type_de_cette_structure;
 }
 
 Égal :: struct {
-    empl base: Instruction
-    genre = #type_de_cette_structure
+    empl base: Instruction;
+    genre = #type_de_cette_structure;
 }
 
 Inégal :: struct {
-    empl base: Instruction
-    genre = #type_de_cette_structure
+    empl base: Instruction;
+    genre = #type_de_cette_structure;
 }
 
 Si :: struct {
-    empl base: Instruction
-    genre = #type_de_cette_structure
+    empl base: Instruction;
+    genre = #type_de_cette_structure;
 
-    cible: *Instruction
+    cible: *Instruction;
 } @ControleDeFlux
 
 Sinon :: struct {
-    empl base: Instruction
-    genre = #type_de_cette_structure
+    empl base: Instruction;
+    genre = #type_de_cette_structure;
 
-    cible: *Instruction
+    cible: *Instruction;
 } @ControleDeFlux
 
 Fin :: struct {
-    empl base: Instruction
-    genre = #type_de_cette_structure
+    empl base: Instruction;
+    genre = #type_de_cette_structure;
 
-    cible: *Instruction
+    cible: *Instruction;
 } @ControleDeFlux
 
 Tantque :: struct {
-    empl base: Instruction
-    genre = #type_de_cette_structure
+    empl base: Instruction;
+    genre = #type_de_cette_structure;
 } @ControleDeFlux
 
 Fais :: struct {
-    empl base: Instruction
-    genre = #type_de_cette_structure
+    empl base: Instruction;
+    genre = #type_de_cette_structure;
 
-    cible: *Instruction
+    cible: *Instruction;
 } @ControleDeFlux
 
 Mem :: struct {
-    empl base: Instruction
-    genre = #type_de_cette_structure
+    empl base: Instruction;
+    genre = #type_de_cette_structure;
 }
 
 LisMem :: struct {
-    empl base: Instruction
-    genre = #type_de_cette_structure
+    empl base: Instruction;
+    genre = #type_de_cette_structure;
 }
 
 ÉcrisMem :: struct {
-    empl base: Instruction
-    genre = #type_de_cette_structure
+    empl base: Instruction;
+    genre = #type_de_cette_structure;
 }
 
 AppelSys1 :: struct {
-    empl base: Instruction
-    genre = #type_de_cette_structure
+    empl base: Instruction;
+    genre = #type_de_cette_structure;
 }
 
 AppelSys2 :: struct {
-    empl base: Instruction
-    genre = #type_de_cette_structure
+    empl base: Instruction;
+    genre = #type_de_cette_structure;
 }
 
 AppelSys3 :: struct {
-    empl base: Instruction
-    genre = #type_de_cette_structure
+    empl base: Instruction;
+    genre = #type_de_cette_structure;
 }
 
 Lâche :: struct {
-    empl base: Instruction
-    genre = #type_de_cette_structure
+    empl base: Instruction;
+    genre = #type_de_cette_structure;
 }
 
 imprime_instructions :: fonc (empl programme: *Programme)
 {
-    début := insts.pointeur
-    fin := insts.pointeur + insts.taille
+    début := insts.pointeur;
+    fin := insts.pointeur + insts.taille;
 
     tantque début < fin {
-        inst := début comme *Instruction
-        type := inst.genre comme *InfoTypeStructure
-        imprime("%", type.nom)
+        inst := début comme *Instruction;
+        type := inst.genre comme *InfoTypeStructure;
+        imprime("%", type.nom);
 
         discr inst.genre {
             NombreEntier {
-                empile := inst comme *NombreEntier
-                imprime(" %", empile.arg)
+                empile := inst comme *NombreEntier;
+                imprime(" %", empile.arg);
             }
             ChaineLittérale {
-                chn := donne_texte(inst.lexème)
-                imprime(" \"%\"", chn)
+                chn := donne_texte(inst.lexème);
+                imprime(" \"%\"", chn);
             }
             Si {}
             Sinon {}
@@ -959,13 +959,13 @@ imprime_instructions :: fonc (empl programme: *Programme)
             Fais {}
             sinon {
                 si type.taille_en_octet != taille_de(Instruction) {
-                    panique("Instruction non-géré : %", type.nom)
+                    panique("Instruction non-géré : %", type.nom);
                 }
             }
         }
 
-        début += type.taille_en_octet
-        imprime("\n")
+        début += type.taille_en_octet;
+        imprime("\n");
     }
 }
 
@@ -977,91 +977,91 @@ imprime_instructions :: fonc (empl programme: *Programme)
 
 renvoie_blocs :: fonc (compilatrice: *Compilatrice, empl programme: *Programme) -> bool
 {
-    début := insts.pointeur
-    fin := insts.pointeur + insts.taille
+    début := insts.pointeur;
+    fin := insts.pointeur + insts.taille;
 
-    pile: [..]*Instruction
-    diffère déloge(pile)
+    pile: [..]*Instruction;
+    diffère déloge(pile);
 
     tantque début < fin {
-        base := début comme *Instruction
-        type := base.genre comme *InfoTypeStructure
+        base := début comme *Instruction;
+        type := base.genre comme *InfoTypeStructure;
 
         discr base.genre {
             Si, Tantque {
-                tableau_ajoute(*pile, base)
+                tableau_ajoute(*pile, base);
             }
             Sinon {
                 si pile.taille == 0 {
-                    rapporte_erreur(compilatrice, base.lexème, "instruction « sinon » errante")
-                    retourne faux
+                    rapporte_erreur(compilatrice, base.lexème, "instruction « sinon » errante");
+                    retourne faux;
                 }
 
-                inst_si := pile[pile.taille - 1] comme *Si
-                assert(inst_si.genre == Si)
-                pile.taille -= 1
-                inst_si.cible = (base comme *Sinon) + 1
+                inst_si := pile[pile.taille - 1] comme *Si;
+                assert(inst_si.genre == Si);
+                pile.taille -= 1;
+                inst_si.cible = (base comme *Sinon) + 1;
 
-                tableau_ajoute(*pile, base)
+                tableau_ajoute(*pile, base);
             }
             Fin {
                 si pile.taille == 0 {
-                    rapporte_erreur(compilatrice, base.lexème, "instruction « fin » errante")
-                    retourne faux
+                    rapporte_erreur(compilatrice, base.lexème, "instruction « fin » errante");
+                    retourne faux;
                 }
 
-                inst_tête := pile[pile.taille - 1]
-                pile.taille -= 1
+                inst_tête := pile[pile.taille - 1];
+                pile.taille -= 1;
                 si inst_tête.genre == Si {
-                    inst_si := inst_tête comme *Si
-                    inst_si.cible = base
+                    inst_si := inst_tête comme *Si;
+                    inst_si.cible = base;
                 }
                 sinon si inst_tête.genre == Sinon {
-                    inst_si := inst_tête comme *Sinon
-                    inst_si.cible = base
+                    inst_si := inst_tête comme *Sinon;
+                    inst_si.cible = base;
                 }
                 sinon si inst_tête.genre == Fais {
-                    inst_fais := inst_tête comme *Fais
-                    assert(inst_fais.cible != nul)
-                    assert(inst_fais.cible.genre == Tantque)
-                    inst_fin := base comme *Fin
-                    inst_fin.cible = inst_fais.cible
-                    inst_fais.cible = (inst_fin + 1)
+                    inst_fais := inst_tête comme *Fais;
+                    assert(inst_fais.cible != nul);
+                    assert(inst_fais.cible.genre == Tantque);
+                    inst_fin := base comme *Fin;
+                    inst_fin.cible = inst_fais.cible;
+                    inst_fais.cible = (inst_fin + 1);
                 }
                 sinon {
-                    panique("« fin » ne peut que terminer une branche « si » ou « sinon »")
+                    panique("« fin » ne peut que terminer une branche « si » ou « sinon »");
                 }
             }
             Fais {
                 si pile.taille == 0 {
-                    rapporte_erreur(compilatrice, base.lexème, "instruction « fais » errante")
-                    retourne faux
+                    rapporte_erreur(compilatrice, base.lexème, "instruction « fais » errante");
+                    retourne faux;
                 }
 
-                inst_tête := pile[pile.taille - 1]
-                pile.taille -= 1
+                inst_tête := pile[pile.taille - 1];
+                pile.taille -= 1;
 
                 si inst_tête.genre != Tantque {
-                    rapporte_erreur(compilatrice, base.lexème, "une instruction « fais » doit se trouver directement après l'expression de « tantque »")
-                    retourne faux
+                    rapporte_erreur(compilatrice, base.lexème, "une instruction « fais » doit se trouver directement après l'expression de « tantque »");
+                    retourne faux;
                 }
 
-                inst_fais := base comme *Fais
-                inst_fais.cible = inst_tête
+                inst_fais := base comme *Fais;
+                inst_fais.cible = inst_tête;
 
-                tableau_ajoute(*pile, inst_fais)
+                tableau_ajoute(*pile, inst_fais);
             }
             sinon {
                 si possède_annotation(type, "ControleDeFlux") {
-                    panique("Instruction non-géré : %", type.nom)
+                    panique("Instruction non-géré : %", type.nom);
                 }
             }
         }
 
-        début += type.taille_en_octet
+        début += type.taille_en_octet;
     }
 
-    retourne vrai
+    retourne vrai;
 }
 
 /** \} */
@@ -1071,522 +1071,522 @@ renvoie_blocs :: fonc (compilatrice: *Compilatrice, empl programme: *Programme) 
  * \{ */
 
 Type :: énum {
-    ENTIER
-    POINTEUR
-    BOOL
+    ENTIER;
+    POINTEUR;
+    BOOL;
 }
 
 Cellule :: struct {
-    type: Type
-    lexème: Lexème
+    type: Type;
+    lexème: Lexème;
 }
 
 empile :: fonc (tableau: *[..]$T, valeur: T)
 {
-    tableau_ajoute(tableau, valeur)
+    tableau_ajoute(tableau, valeur);
 }
 
 dépile :: fonc (tableau: *[..]$T) -> T
 {
-    résultat := mémoire(tableau)[tableau.taille - 1]
-    tableau.taille -= 1
-    retourne résultat
+    résultat := mémoire(tableau)[tableau.taille - 1];
+    tableau.taille -= 1;
+    retourne résultat;
 }
 
 ÉtatPileCellule :: struct {
-    pile: [..]Cellule
-    inst: *Instruction
+    pile: [..]Cellule;
+    inst: *Instruction;
 }
 
 compare_piles :: fonc (compilatrice: *Compilatrice, inst: *Instruction, pile1: []Cellule, pile2: []Cellule, message: chaine)
 {
-    piles_sont_similaires := faux
+    piles_sont_similaires := faux;
     si pile1.taille == pile2.taille {
         pour pile1 {
             si pile2[indice_it].type != it.type {
-                arrête
+                arrête;
             }
         }
         sansarrêt {
-            piles_sont_similaires = vrai
+            piles_sont_similaires = vrai;
         }
     }
 
     si piles_sont_similaires == faux {
-        rapporte_erreur(compilatrice, inst.lexème, message)
+        rapporte_erreur(compilatrice, inst.lexème, message);
 
-        imprimeln("Avant l'instruction :\n")
+        imprimeln("Avant l'instruction :\n");
         pour pile1 {
-            imprime("%, ", it.type)
+            imprime("%, ", it.type);
         }
-        imprime("\n")
+        imprime("\n");
 
-        imprimeln("Après l'instruction :\n")
+        imprimeln("Après l'instruction :\n");
         pour pile2 {
-            imprime("%, ", it.type)
+            imprime("%, ", it.type);
         }
-        imprime("\n")
+        imprime("\n");
 
-        exit(1)
+        exit(1);
     }
 }
 
 valide_sémantique :: fonc (compilatrice: *Compilatrice, programme: *Programme)
 {
-    pile_cellules: [..]Cellule
+    pile_cellules: [..]Cellule;
 
-    états_pile_cellules: [..]ÉtatPileCellule
+    états_pile_cellules: [..]ÉtatPileCellule;
 
-    début := programme.insts.pointeur
-    fin := programme.insts.pointeur + programme.insts.taille
+    début := programme.insts.pointeur;
+    fin := programme.insts.pointeur + programme.insts.taille;
 
     tantque début < fin {
-        base := début comme *Instruction
-        type := base.genre comme *InfoTypeStructure
+        base := début comme *Instruction;
+        type := base.genre comme *InfoTypeStructure;
 
         discr base.genre {
             NombreEntier {
-                empile(*pile_cellules, Cellule(Type.ENTIER, base.lexème))
+                empile(*pile_cellules, Cellule(Type.ENTIER, base.lexème));
             }
             ChaineLittérale {
-                empile(*pile_cellules, Cellule(Type.ENTIER, base.lexème))
-                empile(*pile_cellules, Cellule(Type.POINTEUR, base.lexème))
+                empile(*pile_cellules, Cellule(Type.ENTIER, base.lexème));
+                empile(*pile_cellules, Cellule(Type.POINTEUR, base.lexème));
             }
             Ajoute {
-                garantie_taille_pile_min(compilatrice, pile_cellules, 2, base)
+                garantie_taille_pile_min(compilatrice, pile_cellules, 2, base);
 
-                a := dépile(*pile_cellules)
-                b := dépile(*pile_cellules)
+                a := dépile(*pile_cellules);
+                b := dépile(*pile_cellules);
 
                 si a.type != Type.POINTEUR && a.type != Type.ENTIER {
-                    rapporte_erreur(compilatrice, base.lexème, "l'addition requiers un type entier")
-                    exit(1)
+                    rapporte_erreur(compilatrice, base.lexème, "l'addition requiers un type entier");
+                    exit(1);
                 }
 
                 si b.type != Type.POINTEUR && b.type != Type.ENTIER {
-                    rapporte_erreur(compilatrice, base.lexème, "seuls des entiers et des pointeurs peuvent être additionnés, reçu : %", b.type)
-                    exit(1)
+                    rapporte_erreur(compilatrice, base.lexème, "seuls des entiers et des pointeurs peuvent être additionnés, reçu : %", b.type);
+                    exit(1);
                 }
 
                 si a.type == Type.POINTEUR && b.type == Type.POINTEUR {
-                    rapporte_erreur(compilatrice, base.lexème, "une addition entre des pointeurs est invalide")
-                    exit(1)
+                    rapporte_erreur(compilatrice, base.lexème, "une addition entre des pointeurs est invalide");
+                    exit(1);
                 }
 
-                type_résultat := Type.ENTIER
+                type_résultat := Type.ENTIER;
                 si a.type == Type.POINTEUR || b.type == Type.POINTEUR {
-                    type_résultat = Type.POINTEUR
+                    type_résultat = Type.POINTEUR;
                 }
 
-                empile(*pile_cellules, Cellule(type_résultat, base.lexème))
+                empile(*pile_cellules, Cellule(type_résultat, base.lexème));
             }
             Soustrait {
-                garantie_taille_pile_min(compilatrice, pile_cellules, 2, base)
+                garantie_taille_pile_min(compilatrice, pile_cellules, 2, base);
 
-                a := dépile(*pile_cellules)
-                b := dépile(*pile_cellules)
+                a := dépile(*pile_cellules);
+                b := dépile(*pile_cellules);
 
                 si a.type != Type.ENTIER {
-                    rapporte_erreur(compilatrice, base.lexème, "la soustraction requiers un type entier en deuxième opérande")
-                    exit(1)
+                    rapporte_erreur(compilatrice, base.lexème, "la soustraction requiers un type entier en deuxième opérande");
+                    exit(1);
                 }
 
                 si b.type != Type.ENTIER && b.type != Type.POINTEUR {
-                    rapporte_erreur(compilatrice, base.lexème, "la soustraction requiers un type entier ou pointeur comme première opérande")
-                    exit(1)
+                    rapporte_erreur(compilatrice, base.lexème, "la soustraction requiers un type entier ou pointeur comme première opérande");
+                    exit(1);
                 }
 
-                empile(*pile_cellules, Cellule(b.type, base.lexème))
+                empile(*pile_cellules, Cellule(b.type, base.lexème));
             }
             Multiplie {
-                garantie_taille_pile_min(compilatrice, pile_cellules, 2, base)
+                garantie_taille_pile_min(compilatrice, pile_cellules, 2, base);
 
-                a := dépile(*pile_cellules)
-                b := dépile(*pile_cellules)
+                a := dépile(*pile_cellules);
+                b := dépile(*pile_cellules);
 
                 si a.type != b.type {
-                    rapporte_erreur(compilatrice, base.lexème, "types différents pour l'opération")
-                    exit(1)
+                    rapporte_erreur(compilatrice, base.lexème, "types différents pour l'opération");
+                    exit(1);
                 }
 
                 si a.type != Type.ENTIER {
-                    rapporte_erreur(compilatrice, base.lexème, "requiers des types entiers")
-                    exit(1)
+                    rapporte_erreur(compilatrice, base.lexème, "requiers des types entiers");
+                    exit(1);
                 }
 
-                empile(*pile_cellules, Cellule(Type.ENTIER, base.lexème))
+                empile(*pile_cellules, Cellule(Type.ENTIER, base.lexème));
             }
             DivMod {
-                garantie_taille_pile_min(compilatrice, pile_cellules, 2, base)
+                garantie_taille_pile_min(compilatrice, pile_cellules, 2, base);
 
-                a := dépile(*pile_cellules)
-                b := dépile(*pile_cellules)
+                a := dépile(*pile_cellules);
+                b := dépile(*pile_cellules);
 
                 si a.type != b.type {
-                    rapporte_erreur(compilatrice, base.lexème, "types différents pour l'opération")
-                    exit(1)
+                    rapporte_erreur(compilatrice, base.lexème, "types différents pour l'opération");
+                    exit(1);
                 }
 
                 si a.type != Type.ENTIER {
-                    rapporte_erreur(compilatrice, base.lexème, "requiers des types entiers")
-                    exit(1)
+                    rapporte_erreur(compilatrice, base.lexème, "requiers des types entiers");
+                    exit(1);
                 }
 
-                empile(*pile_cellules, Cellule(Type.ENTIER, base.lexème))
-                empile(*pile_cellules, Cellule(Type.ENTIER, base.lexème))
+                empile(*pile_cellules, Cellule(Type.ENTIER, base.lexème));
+                empile(*pile_cellules, Cellule(Type.ENTIER, base.lexème));
             }
             Égal {
-                garantie_taille_pile_min(compilatrice, pile_cellules, 2, base)
+                garantie_taille_pile_min(compilatrice, pile_cellules, 2, base);
 
-                a := dépile(*pile_cellules)
-                b := dépile(*pile_cellules)
+                a := dépile(*pile_cellules);
+                b := dépile(*pile_cellules);
 
                 si a.type != b.type {
-                    rapporte_erreur(compilatrice, base.lexème, "types différents pour l'opération")
-                    exit(1)
+                    rapporte_erreur(compilatrice, base.lexème, "types différents pour l'opération");
+                    exit(1);
                 }
 
-                empile(*pile_cellules, Cellule(Type.BOOL, base.lexème))
+                empile(*pile_cellules, Cellule(Type.BOOL, base.lexème));
             }
             Inégal {
-                garantie_taille_pile_min(compilatrice, pile_cellules, 2, base)
+                garantie_taille_pile_min(compilatrice, pile_cellules, 2, base);
 
-                a := dépile(*pile_cellules)
-                b := dépile(*pile_cellules)
+                a := dépile(*pile_cellules);
+                b := dépile(*pile_cellules);
 
                 si a.type != b.type {
-                    rapporte_erreur(compilatrice, base.lexème, "types différents pour l'opération")
-                    exit(1)
+                    rapporte_erreur(compilatrice, base.lexème, "types différents pour l'opération");
+                    exit(1);
                 }
 
-                empile(*pile_cellules, Cellule(Type.BOOL, base.lexème))
+                empile(*pile_cellules, Cellule(Type.BOOL, base.lexème));
             }
             Inférieur {
-                garantie_taille_pile_min(compilatrice, pile_cellules, 2, base)
+                garantie_taille_pile_min(compilatrice, pile_cellules, 2, base);
 
-                a := dépile(*pile_cellules)
-                b := dépile(*pile_cellules)
+                a := dépile(*pile_cellules);
+                b := dépile(*pile_cellules);
 
                 si a.type != b.type {
-                    rapporte_erreur(compilatrice, base.lexème, "types différents pour l'opération")
-                    exit(1)
+                    rapporte_erreur(compilatrice, base.lexème, "types différents pour l'opération");
+                    exit(1);
                 }
 
                 si a.type != Type.ENTIER && a.type != Type.POINTEUR {
-                    rapporte_erreur(compilatrice, a.lexème, "requiers des types entier ou pointeur")
-                    exit(1)
+                    rapporte_erreur(compilatrice, a.lexème, "requiers des types entier ou pointeur");
+                    exit(1);
                 }
 
-                empile(*pile_cellules, Cellule(Type.BOOL, base.lexème))
+                empile(*pile_cellules, Cellule(Type.BOOL, base.lexème));
             }
             InférieurÉgal {
-                garantie_taille_pile_min(compilatrice, pile_cellules, 2, base)
+                garantie_taille_pile_min(compilatrice, pile_cellules, 2, base);
 
-                a := dépile(*pile_cellules)
-                b := dépile(*pile_cellules)
+                a := dépile(*pile_cellules);
+                b := dépile(*pile_cellules);
 
                 si a.type != b.type {
-                    rapporte_erreur(compilatrice, base.lexème, "types différents pour l'opération")
-                    exit(1)
+                    rapporte_erreur(compilatrice, base.lexème, "types différents pour l'opération");
+                    exit(1);
                 }
 
                 si a.type != Type.ENTIER && a.type != Type.POINTEUR {
-                    rapporte_erreur(compilatrice, a.lexème, "requiers des types entier ou pointeur")
-                    exit(1)
+                    rapporte_erreur(compilatrice, a.lexème, "requiers des types entier ou pointeur");
+                    exit(1);
                 }
 
-                empile(*pile_cellules, Cellule(Type.BOOL, base.lexème))
+                empile(*pile_cellules, Cellule(Type.BOOL, base.lexème));
             }
             Supérieur {
-                garantie_taille_pile_min(compilatrice, pile_cellules, 2, base)
+                garantie_taille_pile_min(compilatrice, pile_cellules, 2, base);
 
-                a := dépile(*pile_cellules)
-                b := dépile(*pile_cellules)
+                a := dépile(*pile_cellules);
+                b := dépile(*pile_cellules);
 
                 si a.type != b.type {
-                    rapporte_erreur(compilatrice, base.lexème, "types différents pour l'opération")
-                    exit(1)
+                    rapporte_erreur(compilatrice, base.lexème, "types différents pour l'opération");
+                    exit(1);
                 }
 
                 si a.type != Type.ENTIER && a.type != Type.POINTEUR {
-                    rapporte_erreur(compilatrice, a.lexème, "requiers des types entier ou pointeur")
-                    exit(1)
+                    rapporte_erreur(compilatrice, a.lexème, "requiers des types entier ou pointeur");
+                    exit(1);
                 }
 
-                empile(*pile_cellules, Cellule(Type.BOOL, base.lexème))
+                empile(*pile_cellules, Cellule(Type.BOOL, base.lexème));
             }
             SupérieurÉgal {
-                garantie_taille_pile_min(compilatrice, pile_cellules, 2, base)
+                garantie_taille_pile_min(compilatrice, pile_cellules, 2, base);
 
-                a := dépile(*pile_cellules)
-                b := dépile(*pile_cellules)
+                a := dépile(*pile_cellules);
+                b := dépile(*pile_cellules);
 
                 si a.type != b.type {
-                    rapporte_erreur(compilatrice, base.lexème, "types différents pour l'opération")
-                    exit(1)
+                    rapporte_erreur(compilatrice, base.lexème, "types différents pour l'opération");
+                    exit(1);
                 }
 
                 si a.type != Type.ENTIER && a.type != Type.POINTEUR {
-                    rapporte_erreur(compilatrice, a.lexème, "requiers des types entier ou pointeur")
-                    exit(1)
+                    rapporte_erreur(compilatrice, a.lexème, "requiers des types entier ou pointeur");
+                    exit(1);
                 }
 
-                empile(*pile_cellules, Cellule(Type.BOOL, base.lexème))
+                empile(*pile_cellules, Cellule(Type.BOOL, base.lexème));
             }
             DécalageDroite {
-                garantie_taille_pile_min(compilatrice, pile_cellules, 2, base)
+                garantie_taille_pile_min(compilatrice, pile_cellules, 2, base);
 
-                a := dépile(*pile_cellules)
-                b := dépile(*pile_cellules)
+                a := dépile(*pile_cellules);
+                b := dépile(*pile_cellules);
 
                 si a.type != b.type {
-                    rapporte_erreur(compilatrice, base.lexème, "types différents pour l'opération")
-                    exit(1)
+                    rapporte_erreur(compilatrice, base.lexème, "types différents pour l'opération");
+                    exit(1);
                 }
 
                 si a.type != Type.ENTIER {
-                    rapporte_erreur(compilatrice, a.lexème, "requiers des types entier")
-                    exit(1)
+                    rapporte_erreur(compilatrice, a.lexème, "requiers des types entier");
+                    exit(1);
                 }
 
-                empile(*pile_cellules, Cellule(Type.ENTIER, base.lexème))
+                empile(*pile_cellules, Cellule(Type.ENTIER, base.lexème));
             }
             DécalageGauche {
-                garantie_taille_pile_min(compilatrice, pile_cellules, 2, base)
+                garantie_taille_pile_min(compilatrice, pile_cellules, 2, base);
 
-                a := dépile(*pile_cellules)
-                b := dépile(*pile_cellules)
+                a := dépile(*pile_cellules);
+                b := dépile(*pile_cellules);
 
                 si a.type != b.type {
-                    rapporte_erreur(compilatrice, base.lexème, "types différents pour l'opération")
-                    exit(1)
+                    rapporte_erreur(compilatrice, base.lexème, "types différents pour l'opération");
+                    exit(1);
                 }
 
                 si a.type != Type.ENTIER {
-                    rapporte_erreur(compilatrice, a.lexème, "requiers des types entier")
-                    exit(1)
+                    rapporte_erreur(compilatrice, a.lexème, "requiers des types entier");
+                    exit(1);
                 }
 
-                empile(*pile_cellules, Cellule(Type.ENTIER, base.lexème))
+                empile(*pile_cellules, Cellule(Type.ENTIER, base.lexème));
             }
             EtBinaire {
-                garantie_taille_pile_min(compilatrice, pile_cellules, 2, base)
+                garantie_taille_pile_min(compilatrice, pile_cellules, 2, base);
 
-                a := dépile(*pile_cellules)
-                b := dépile(*pile_cellules)
+                a := dépile(*pile_cellules);
+                b := dépile(*pile_cellules);
 
                 si a.type != b.type {
-                    rapporte_erreur(compilatrice, base.lexème, "types différents pour l'opération")
-                    exit(1)
+                    rapporte_erreur(compilatrice, base.lexème, "types différents pour l'opération");
+                    exit(1);
                 }
 
                 si a.type != Type.ENTIER && a.type != Type.BOOL {
-                    rapporte_erreur(compilatrice, base.lexème, "requiers des types entier ou booléens")
-                    exit(1)
+                    rapporte_erreur(compilatrice, base.lexème, "requiers des types entier ou booléens");
+                    exit(1);
                 }
 
-                empile(*pile_cellules, Cellule(a.type, base.lexème))
+                empile(*pile_cellules, Cellule(a.type, base.lexème));
             }
             OuInclusif {
-                garantie_taille_pile_min(compilatrice, pile_cellules, 2, base)
+                garantie_taille_pile_min(compilatrice, pile_cellules, 2, base);
 
-                a := dépile(*pile_cellules)
-                b := dépile(*pile_cellules)
+                a := dépile(*pile_cellules);
+                b := dépile(*pile_cellules);
 
                 si a.type != b.type {
-                    rapporte_erreur(compilatrice, base.lexème, "types différents pour l'opération")
-                    exit(1)
+                    rapporte_erreur(compilatrice, base.lexème, "types différents pour l'opération");
+                    exit(1);
                 }
 
                 si a.type != Type.ENTIER && a.type != Type.BOOL {
-                    rapporte_erreur(compilatrice, base.lexème, "requiers des types entier ou booléens")
-                    exit(1)
+                    rapporte_erreur(compilatrice, base.lexème, "requiers des types entier ou booléens");
+                    exit(1);
                 }
 
-                empile(*pile_cellules, Cellule(a.type, base.lexème))
+                empile(*pile_cellules, Cellule(a.type, base.lexème));
             }
             OuExclusif {
-                garantie_taille_pile_min(compilatrice, pile_cellules, 2, base)
+                garantie_taille_pile_min(compilatrice, pile_cellules, 2, base);
 
-                a := dépile(*pile_cellules)
-                b := dépile(*pile_cellules)
+                a := dépile(*pile_cellules);
+                b := dépile(*pile_cellules);
 
                 si a.type != b.type {
-                    rapporte_erreur(compilatrice, base.lexème, "types différents pour l'opération")
-                    exit(1)
+                    rapporte_erreur(compilatrice, base.lexème, "types différents pour l'opération");
+                    exit(1);
                 }
 
                 si a.type != Type.ENTIER {
-                    rapporte_erreur(compilatrice, base.lexème, "requiers des types entier")
-                    exit(1)
+                    rapporte_erreur(compilatrice, base.lexème, "requiers des types entier");
+                    exit(1);
                 }
 
-                empile(*pile_cellules, Cellule(Type.ENTIER, base.lexème))
+                empile(*pile_cellules, Cellule(Type.ENTIER, base.lexème));
             }
             Cliche {
-                garantie_taille_pile_min(compilatrice, pile_cellules, 1, base)
-                _ := dépile(*pile_cellules)
+                garantie_taille_pile_min(compilatrice, pile_cellules, 1, base);
+                _ := dépile(*pile_cellules);
             }
             Duplique {
-                garantie_taille_pile_min(compilatrice, pile_cellules, 1, base)
-                a := dépile(*pile_cellules)
-                empile(*pile_cellules, a)
-                empile(*pile_cellules, a)
+                garantie_taille_pile_min(compilatrice, pile_cellules, 1, base);
+                a := dépile(*pile_cellules);
+                empile(*pile_cellules, a);
+                empile(*pile_cellules, a);
             }
             Permute {
-                garantie_taille_pile_min(compilatrice, pile_cellules, 2, base)
-                a := dépile(*pile_cellules)
-                b := dépile(*pile_cellules)
-                empile(*pile_cellules, a)
-                empile(*pile_cellules, b)
+                garantie_taille_pile_min(compilatrice, pile_cellules, 2, base);
+                a := dépile(*pile_cellules);
+                b := dépile(*pile_cellules);
+                empile(*pile_cellules, a);
+                empile(*pile_cellules, b);
             }
             Enjambe {
-                garantie_taille_pile_min(compilatrice, pile_cellules, 2, base)
-                a := dépile(*pile_cellules)
-                b := dépile(*pile_cellules)
-                empile(*pile_cellules, b)
-                empile(*pile_cellules, a)
-                empile(*pile_cellules, b)
+                garantie_taille_pile_min(compilatrice, pile_cellules, 2, base);
+                a := dépile(*pile_cellules);
+                b := dépile(*pile_cellules);
+                empile(*pile_cellules, b);
+                empile(*pile_cellules, a);
+                empile(*pile_cellules, b);
             }
             Si {
-                garantie_taille_pile_min(compilatrice, pile_cellules, 1, base)
+                garantie_taille_pile_min(compilatrice, pile_cellules, 1, base);
 
-                a := dépile(*pile_cellules)
+                a := dépile(*pile_cellules);
                 si a.type != Type.BOOL {
-                    rapporte_erreur(compilatrice, a.lexème, "la valeur de test d'une instruction si doit être de type booléen")
-                    exit(1)
+                    rapporte_erreur(compilatrice, a.lexème, "la valeur de test d'une instruction si doit être de type booléen");
+                    exit(1);
                 }
 
-                état: ÉtatPileCellule
-                état.pile = tableau_copie(pile_cellules)
-                état.inst = base
-                tableau_ajoute(*états_pile_cellules, état)
+                état: ÉtatPileCellule;
+                état.pile = tableau_copie(pile_cellules);
+                état.inst = base;
+                tableau_ajoute(*états_pile_cellules, état);
             }
             Sinon {
-                assert(états_pile_cellules.taille != 0)
+                assert(états_pile_cellules.taille != 0);
 
-                état_avant_si := dépile(*états_pile_cellules)
-                assert(état_avant_si.inst.genre == Si)
+                état_avant_si := dépile(*états_pile_cellules);
+                assert(état_avant_si.inst.genre == Si);
 
-                état: ÉtatPileCellule
-                état.pile = pile_cellules
-                état.inst = base
-                tableau_ajoute(*états_pile_cellules, état)
+                état: ÉtatPileCellule;
+                état.pile = pile_cellules;
+                état.inst = base;
+                tableau_ajoute(*états_pile_cellules, état);
 
-                pile_cellules = état_avant_si.pile
+                pile_cellules = état_avant_si.pile;
             }
             Fin {
-                assert(états_pile_cellules.taille != 0)
+                assert(états_pile_cellules.taille != 0);
 
-                état := dépile(*états_pile_cellules)
+                état := dépile(*états_pile_cellules);
                 si état.inst.genre == Si {
-                    compare_piles(compilatrice, état.inst, état.pile, pile_cellules, "une instruction si sans branche sinon ne doit pas modifier l'état de la pile")
+                    compare_piles(compilatrice, état.inst, état.pile, pile_cellules, "une instruction si sans branche sinon ne doit pas modifier l'état de la pile");
                 }
                 sinon si état.inst.genre == Sinon {
-                    compare_piles(compilatrice, état.inst, état.pile, pile_cellules, "les deux branches de si-sinon doivent générer la même pile")
+                    compare_piles(compilatrice, état.inst, état.pile, pile_cellules, "les deux branches de si-sinon doivent générer la même pile");
                 }
                 sinon si état.inst.genre == Fais {
-                    compare_piles(compilatrice, état.inst, état.pile, pile_cellules, "une instruction tantque ne doit pas modifier l'état de la pile")
+                    compare_piles(compilatrice, état.inst, état.pile, pile_cellules, "une instruction tantque ne doit pas modifier l'état de la pile");
                 }
                 sinon {
-                    genre := état.inst.genre comme *InfoTypeStructure
-                    panique("instruction non-gérée : %", genre.nom)
+                    genre := état.inst.genre comme *InfoTypeStructure;
+                    panique("instruction non-gérée : %", genre.nom);
                 }
 
-                déloge(pile_cellules)
-                pile_cellules = état.pile
+                déloge(pile_cellules);
+                pile_cellules = état.pile;
             }
             Tantque {
                 // tantque n'est qu'une marqueur
             }
             Fais {
-                garantie_taille_pile_min(compilatrice, pile_cellules, 1, base)
+                garantie_taille_pile_min(compilatrice, pile_cellules, 1, base);
 
-                a := dépile(*pile_cellules)
+                a := dépile(*pile_cellules);
                 si a.type != Type.BOOL {
-                    rapporte_erreur(compilatrice, a.lexème, "la valeur de test d'une instruction fais doit être de type booléen")
-                    exit(1)
+                    rapporte_erreur(compilatrice, a.lexème, "la valeur de test d'une instruction fais doit être de type booléen");
+                    exit(1);
                 }
 
-                état: ÉtatPileCellule
-                état.pile = tableau_copie(pile_cellules)
-                état.inst = base
-                tableau_ajoute(*états_pile_cellules, état)
+                état: ÉtatPileCellule;
+                état.pile = tableau_copie(pile_cellules);
+                état.inst = base;
+                tableau_ajoute(*états_pile_cellules, état);
             }
             Mem {
-                empile(*pile_cellules, Cellule(Type.POINTEUR, base.lexème))
+                empile(*pile_cellules, Cellule(Type.POINTEUR, base.lexème));
             }
             LisMem {
-                garantie_taille_pile_min(compilatrice, pile_cellules, 1, base)
+                garantie_taille_pile_min(compilatrice, pile_cellules, 1, base);
 
-                a := dépile(*pile_cellules)
+                a := dépile(*pile_cellules);
 
                 si a.type != Type.POINTEUR {
-                    rapporte_erreur(compilatrice, a.lexème, "l'écriture de mémoire doit prendre un pointeur comme destination")
-                    exit(1)
+                    rapporte_erreur(compilatrice, a.lexème, "l'écriture de mémoire doit prendre un pointeur comme destination");
+                    exit(1);
                 }
 
-                empile(*pile_cellules, Cellule(Type.ENTIER, base.lexème))
+                empile(*pile_cellules, Cellule(Type.ENTIER, base.lexème));
             }
             ÉcrisMem {
-                garantie_taille_pile_min(compilatrice, pile_cellules, 2, base)
+                garantie_taille_pile_min(compilatrice, pile_cellules, 2, base);
 
-                _ := dépile(*pile_cellules)
-                a := dépile(*pile_cellules)
+                _ := dépile(*pile_cellules);
+                a := dépile(*pile_cellules);
 
                 si a.type != Type.POINTEUR {
-                    rapporte_erreur(compilatrice, a.lexème, "l'écriture de mémoire doit prendre un pointeur comme destination")
-                    exit(1)
+                    rapporte_erreur(compilatrice, a.lexème, "l'écriture de mémoire doit prendre un pointeur comme destination");
+                    exit(1);
                 }
             }
             AppelSys1 {
-                garantie_taille_pile_min(compilatrice, pile_cellules, 2, base)
-                _ := dépile(*pile_cellules)
-                _ := dépile(*pile_cellules)
-                empile(*pile_cellules, Cellule(Type.ENTIER, base.lexème))
+                garantie_taille_pile_min(compilatrice, pile_cellules, 2, base);
+                _ := dépile(*pile_cellules);
+                _ := dépile(*pile_cellules);
+                empile(*pile_cellules, Cellule(Type.ENTIER, base.lexème));
             }
             AppelSys2 {
-                garantie_taille_pile_min(compilatrice, pile_cellules, 3, base)
-                _ := dépile(*pile_cellules)
-                _ := dépile(*pile_cellules)
-                _ := dépile(*pile_cellules)
-                empile(*pile_cellules, Cellule(Type.ENTIER, base.lexème))
+                garantie_taille_pile_min(compilatrice, pile_cellules, 3, base);
+                _ := dépile(*pile_cellules);
+                _ := dépile(*pile_cellules);
+                _ := dépile(*pile_cellules);
+                empile(*pile_cellules, Cellule(Type.ENTIER, base.lexème));
             }
             AppelSys3 {
-                garantie_taille_pile_min(compilatrice, pile_cellules, 4, base)
-                _ := dépile(*pile_cellules)
-                _ := dépile(*pile_cellules)
-                _ := dépile(*pile_cellules)
-                _ := dépile(*pile_cellules)
-                empile(*pile_cellules, Cellule(Type.ENTIER, base.lexème))
+                garantie_taille_pile_min(compilatrice, pile_cellules, 4, base);
+                _ := dépile(*pile_cellules);
+                _ := dépile(*pile_cellules);
+                _ := dépile(*pile_cellules);
+                _ := dépile(*pile_cellules);
+                empile(*pile_cellules, Cellule(Type.ENTIER, base.lexème));
             }
             Lâche {
-                garantie_taille_pile_min(compilatrice, pile_cellules, 1, base)
-                _ := dépile(*pile_cellules)
+                garantie_taille_pile_min(compilatrice, pile_cellules, 1, base);
+                _ := dépile(*pile_cellules);
             }
             sinon {
-                panique("Instruction non-géré : %", type.nom)
+                panique("Instruction non-géré : %", type.nom);
             }
         }
 
-        début += type.taille_en_octet
+        début += type.taille_en_octet;
     }
 
     si pile_cellules {
         tantque pile_cellules {
-            valeur := dépile(*pile_cellules)
-            rapporte_erreur(compilatrice, valeur.lexème, "valeur restante sur la pile")
+            valeur := dépile(*pile_cellules);
+            rapporte_erreur(compilatrice, valeur.lexème, "valeur restante sur la pile");
         }
 
-        exit(1)
+        exit(1);
     }
 }
 
 garantie_taille_pile_min :: fonc (compilatrice: *Compilatrice, pile: []Cellule, taille_min: z64, inst: *Instruction)
 {
     si pile.taille < taille_min {
-        rapporte_erreur(compilatrice, inst.lexème, "pas assez de valeurs sur la pile")
-        exit(1)
+        rapporte_erreur(compilatrice, inst.lexème, "pas assez de valeurs sur la pile");
+        exit(1);
     }
 }
 
@@ -1597,261 +1597,261 @@ garantie_taille_pile_min :: fonc (compilatrice: *Compilatrice, pile: []Cellule, 
  * \{ */
 
 Simulatrice :: struct {
-    pile: [..]z64
-    mem: [..]octet
-    base_données_constantes: *octet
+    pile: [..]z64;
+    mem: [..]octet;
+    base_données_constantes: *octet;
 }
 
 empile :: fonc (empl simulatrice: *Simulatrice, valeur: z64)
 {
-    tableau_ajoute(*pile, valeur)
+    tableau_ajoute(*pile, valeur);
 }
 
 dépile :: fonc (empl simulatrice: *Simulatrice) -> z64
 {
-    résultat := pile[pile.taille - 1]
-    pile.taille -= 1
-    retourne résultat
+    résultat := pile[pile.taille - 1];
+    pile.taille -= 1;
+    retourne résultat;
 }
 
 donne_tête :: fonc (empl simulatrice: *Simulatrice) -> z64
 {
-    résultat := pile[pile.taille - 1]
-    retourne résultat
+    résultat := pile[pile.taille - 1];
+    retourne résultat;
 }
 
 simule_programme :: fonc (empl programme: *Programme)
 {
-    simulatrice: Simulatrice
-    simulatrice.base_données_constantes = programme.données_constantes.pointeur
-    diffère déloge(simulatrice.mem)
-    tableau_redimensionne_sans_init(simulatrice.mem, CAPACITÉ_MÉMOIRE)
+    simulatrice: Simulatrice;
+    simulatrice.base_données_constantes = programme.données_constantes.pointeur;
+    diffère déloge(simulatrice.mem);
+    tableau_redimensionne_sans_init(simulatrice.mem, CAPACITÉ_MÉMOIRE);
 
     // À FAIRE : pour la simulation, considère avoir une manière de spécifier
     // des arguments et ajoute des tests
-    arguments := arguments_ligne_commande()
+    arguments := arguments_ligne_commande();
 
-    empile(*simulatrice, 0)
+    empile(*simulatrice, 0);
     pour > arguments {
-        empile(*simulatrice, it.pointeur comme z64)
+        empile(*simulatrice, it.pointeur comme z64);
     }
-    empile(*simulatrice, arguments.taille)
+    empile(*simulatrice, arguments.taille);
 
-    simule_instructions(*simulatrice, programme.insts)
+    simule_instructions(*simulatrice, programme.insts);
 }
 
 simule_instructions :: fonc (simulatrice: *Simulatrice, insts: []octet)
 {
-    base_données_constantes := simulatrice.base_données_constantes
+    base_données_constantes := simulatrice.base_données_constantes;
 
-    début := insts.pointeur
-    fin := insts.pointeur + insts.taille
+    début := insts.pointeur;
+    fin := insts.pointeur + insts.taille;
 
     tantque début < fin {
-        base := début comme *Instruction
-        type := base.genre comme *InfoTypeStructure
+        base := début comme *Instruction;
+        type := base.genre comme *InfoTypeStructure;
 
         discr base.genre {
             NombreEntier {
-                inst := base comme *NombreEntier
-                empile(simulatrice, inst.arg)
+                inst := base comme *NombreEntier;
+                empile(simulatrice, inst.arg);
             }
             ChaineLittérale {
-                inst := base comme *ChaineLittérale
+                inst := base comme *ChaineLittérale;
                 // À FAIRE : valide que la chaine est correcte
-                chn := inst.chaine_constante
-                empile(simulatrice, chn.taille)
-                empile(simulatrice, base_données_constantes comme z64 + chn.décalage)
+                chn := inst.chaine_constante;
+                empile(simulatrice, chn.taille);
+                empile(simulatrice, base_données_constantes comme z64 + chn.décalage);
             }
             Ajoute {
-                a := dépile(simulatrice)
-                b := dépile(simulatrice)
-                empile(simulatrice, b + a)
+                a := dépile(simulatrice);
+                b := dépile(simulatrice);
+                empile(simulatrice, b + a);
             }
             Soustrait {
-                a := dépile(simulatrice)
-                b := dépile(simulatrice)
-                empile(simulatrice, b - a)
+                a := dépile(simulatrice);
+                b := dépile(simulatrice);
+                empile(simulatrice, b - a);
             }
             Multiplie {
-                a := dépile(simulatrice)
-                b := dépile(simulatrice)
-                empile(simulatrice, b * a)
+                a := dépile(simulatrice);
+                b := dépile(simulatrice);
+                empile(simulatrice, b * a);
             }
             DivMod {
-                a := dépile(simulatrice)
-                b := dépile(simulatrice)
-                empile(simulatrice, b / a)
-                empile(simulatrice, b % a)
+                a := dépile(simulatrice);
+                b := dépile(simulatrice);
+                empile(simulatrice, b / a);
+                empile(simulatrice, b % a);
             }
             Égal {
-                a := dépile(simulatrice)
-                b := dépile(simulatrice)
+                a := dépile(simulatrice);
+                b := dépile(simulatrice);
                 résultat := si a == b { 1 } sinon { 0 }
-                empile(simulatrice, résultat)
+                empile(simulatrice, résultat);
             }
             Inégal {
-                a := dépile(simulatrice)
-                b := dépile(simulatrice)
+                a := dépile(simulatrice);
+                b := dépile(simulatrice);
                 résultat := si a != b { 1 } sinon { 0 }
-                empile(simulatrice, résultat)
+                empile(simulatrice, résultat);
             }
             Inférieur {
-                a := dépile(simulatrice)
-                b := dépile(simulatrice)
+                a := dépile(simulatrice);
+                b := dépile(simulatrice);
                 résultat := si b < a { 1 } sinon { 0 }
-                empile(simulatrice, résultat)
+                empile(simulatrice, résultat);
             }
             InférieurÉgal {
-                a := dépile(simulatrice)
-                b := dépile(simulatrice)
+                a := dépile(simulatrice);
+                b := dépile(simulatrice);
                 résultat := si b <= a { 1 } sinon { 0 }
-                empile(simulatrice, résultat)
+                empile(simulatrice, résultat);
             }
             Supérieur {
-                a := dépile(simulatrice)
-                b := dépile(simulatrice)
+                a := dépile(simulatrice);
+                b := dépile(simulatrice);
                 résultat := si b > a { 1 } sinon { 0 }
-                empile(simulatrice, résultat)
+                empile(simulatrice, résultat);
             }
             SupérieurÉgal {
-                a := dépile(simulatrice)
-                b := dépile(simulatrice)
+                a := dépile(simulatrice);
+                b := dépile(simulatrice);
                 résultat := si b >= a { 1 } sinon { 0 }
-                empile(simulatrice, résultat)
+                empile(simulatrice, résultat);
             }
             DécalageDroite {
-                a := dépile(simulatrice)
-                b := dépile(simulatrice)
-                empile(simulatrice, b >> a)
+                a := dépile(simulatrice);
+                b := dépile(simulatrice);
+                empile(simulatrice, b >> a);
             }
             DécalageGauche {
-                a := dépile(simulatrice)
-                b := dépile(simulatrice)
-                empile(simulatrice, b << a)
+                a := dépile(simulatrice);
+                b := dépile(simulatrice);
+                empile(simulatrice, b << a);
             }
             EtBinaire {
-                a := dépile(simulatrice)
-                b := dépile(simulatrice)
-                empile(simulatrice, b & a)
+                a := dépile(simulatrice);
+                b := dépile(simulatrice);
+                empile(simulatrice, b & a);
             }
             OuInclusif {
-                a := dépile(simulatrice)
-                b := dépile(simulatrice)
-                empile(simulatrice, b | a)
+                a := dépile(simulatrice);
+                b := dépile(simulatrice);
+                empile(simulatrice, b | a);
             }
             OuExclusif {
-                a := dépile(simulatrice)
-                b := dépile(simulatrice)
-                empile(simulatrice, b ^ a)
+                a := dépile(simulatrice);
+                b := dépile(simulatrice);
+                empile(simulatrice, b ^ a);
             }
             Cliche {
-                valeur := dépile(simulatrice)
-                imprimeln("%", valeur)
+                valeur := dépile(simulatrice);
+                imprimeln("%", valeur);
             }
             Duplique {
-                valeur := dépile(simulatrice)
-                empile(simulatrice, valeur)
-                empile(simulatrice, valeur)
+                valeur := dépile(simulatrice);
+                empile(simulatrice, valeur);
+                empile(simulatrice, valeur);
             }
             Permute {
-                valeur1 := dépile(simulatrice)
-                valeur2 := dépile(simulatrice)
-                empile(simulatrice, valeur1)
-                empile(simulatrice, valeur2)
+                valeur1 := dépile(simulatrice);
+                valeur2 := dépile(simulatrice);
+                empile(simulatrice, valeur1);
+                empile(simulatrice, valeur2);
             }
             Enjambe {
-                valeur1 := dépile(simulatrice)
-                valeur2 := dépile(simulatrice)
-                empile(simulatrice, valeur2)
-                empile(simulatrice, valeur1)
-                empile(simulatrice, valeur2)
+                valeur1 := dépile(simulatrice);
+                valeur2 := dépile(simulatrice);
+                empile(simulatrice, valeur2);
+                empile(simulatrice, valeur1);
+                empile(simulatrice, valeur2);
             }
             Si {
-                inst := base comme *Si
-                valeur := dépile(simulatrice)
+                inst := base comme *Si;
+                valeur := dépile(simulatrice);
                 si valeur == 0 {
-                    début = inst.cible
-                    continue
+                    début = inst.cible;
+                    continue;
                 }
             }
             Sinon {
-                inst := base comme *Sinon
-                début = inst.cible
-                continue
+                inst := base comme *Sinon;
+                début = inst.cible;
+                continue;
             }
             Fin {
-                inst := base comme *Fin
+                inst := base comme *Fin;
                 si inst.cible {
-                    début = inst.cible
-                    continue
+                    début = inst.cible;
+                    continue;
                 }
             }
             Tantque {}
             Fais {
-                inst := base comme *Fais
-                valeur := dépile(simulatrice)
+                inst := base comme *Fais;
+                valeur := dépile(simulatrice);
                 si valeur == 0 {
-                    début = inst.cible
-                    continue
+                    début = inst.cible;
+                    continue;
                 }
             }
             Mem {
-                empile(simulatrice, simulatrice.mem.pointeur comme z64)
+                empile(simulatrice, simulatrice.mem.pointeur comme z64);
             }
             LisMem {
-                mem := dépile(simulatrice) comme *octet
-                valeur : n64 = (mémoire(mem)) comme n8
-                empile(simulatrice, valeur comme z64)
+                mem := dépile(simulatrice) comme *octet;
+                valeur : n64 = (mémoire(mem)) comme n8;
+                empile(simulatrice, valeur comme z64);
             }
             ÉcrisMem {
-                valeur := dépile(simulatrice)
-                mem := dépile(simulatrice) comme *octet
-                mémoire(mem) = valeur comme octet
+                valeur := dépile(simulatrice);
+                mem := dépile(simulatrice) comme *octet;
+                mémoire(mem) = valeur comme octet;
             }
             AppelSys1 {
-                code := dépile(simulatrice)
+                code := dépile(simulatrice);
                 si code == 60 {
-                    arg0 := dépile(simulatrice)
-                    exit(arg0 comme z32)
+                    arg0 := dépile(simulatrice);
+                    exit(arg0 comme z32);
                 }
                 sinon {
-                    panique("Appel système inconnu : %", code)
+                    panique("Appel système inconnu : %", code);
                 }
             }
             AppelSys3 {
-                code := dépile(simulatrice)
+                code := dépile(simulatrice);
                 si code == 0 {
-                    arg0 := dépile(simulatrice)
-                    arg1 := dépile(simulatrice)
-                    arg2 := dépile(simulatrice)
+                    arg0 := dépile(simulatrice);
+                    arg1 := dépile(simulatrice);
+                    arg2 := dépile(simulatrice);
 
-                    résultat := read(arg0 comme z32, arg1 comme *z8, arg2 comme n64)
+                    résultat := read(arg0 comme z32, arg1 comme *z8, arg2 comme n64);
 
-                    empile(simulatrice, résultat)
+                    empile(simulatrice, résultat);
                 }
                 sinon si code == 1 {
-                    arg0 := dépile(simulatrice)
-                    arg1 := dépile(simulatrice)
-                    arg2 := dépile(simulatrice)
+                    arg0 := dépile(simulatrice);
+                    arg1 := dépile(simulatrice);
+                    arg2 := dépile(simulatrice);
 
-                    résultat := write(arg0 comme z32, arg1 comme *z8, arg2)
+                    résultat := write(arg0 comme z32, arg1 comme *z8, arg2);
 
-                    empile(simulatrice, résultat)
+                    empile(simulatrice, résultat);
                 }
                 sinon {
-                    panique("Appel système inconnu : %", code)
+                    panique("Appel système inconnu : %", code);
                 }
             }
             Lâche {
-                _ := dépile(simulatrice)
+                _ := dépile(simulatrice);
             }
             sinon {
-                panique("Instruction non-géré : %", type.nom)
+                panique("Instruction non-géré : %", type.nom);
             }
         }
 
-        début += type.taille_en_octet
+        début += type.taille_en_octet;
     }
 }
 
@@ -1863,373 +1863,373 @@ simule_instructions :: fonc (simulatrice: *Simulatrice, insts: []octet)
 
 compile_programme :: fonc (programme: *Programme, nom_de_base: chaine, lance_programme: bool)
 {
-    enchaineuse: Enchaineuse
-    initialise_enchaineuse(*enchaineuse)
+    enchaineuse: Enchaineuse;
+    initialise_enchaineuse(*enchaineuse);
 
-    ajoute_au_tampon(*enchaineuse, "%define SYS_exit 60\n")
+    ajoute_au_tampon(*enchaineuse, "%define SYS_exit 60\n");
 
-    ajoute_au_tampon(*enchaineuse, "segment .bss\n")
-    imprime_dans_enchaineuse(*enchaineuse, "mem resb %\n", CAPACITÉ_MÉMOIRE)
+    ajoute_au_tampon(*enchaineuse, "segment .bss\n");
+    imprime_dans_enchaineuse(*enchaineuse, "mem resb %\n", CAPACITÉ_MÉMOIRE);
 
     si programme.données_constantes {
-        ajoute_au_tampon(*enchaineuse, "segment .data\n")
-        ajoute_au_tampon(*enchaineuse, "DC: db ")
-        virgule := ""
+        ajoute_au_tampon(*enchaineuse, "segment .data\n");
+        ajoute_au_tampon(*enchaineuse, "DC: db ");
+        virgule := "";
         pour programme.données_constantes {
-            imprime_dans_enchaineuse(*enchaineuse, "%%", virgule, it comme z32)
-            virgule = ", "
+            imprime_dans_enchaineuse(*enchaineuse, "%%", virgule, it comme z32);
+            virgule = ", ";
         }
-        ajoute_au_tampon(*enchaineuse, "\n\n")
+        ajoute_au_tampon(*enchaineuse, "\n\n");
     }
 
-    ajoute_au_tampon(*enchaineuse, "segment .text\n")
-    ajoute_au_tampon(*enchaineuse, "global cliche\n")
-    ajoute_au_tampon(*enchaineuse, "global _start\n")
+    ajoute_au_tampon(*enchaineuse, "segment .text\n");
+    ajoute_au_tampon(*enchaineuse, "global cliche\n");
+    ajoute_au_tampon(*enchaineuse, "global _start\n");
 
-    asm: AssembleuseNASM
-    asm.enchaineuse = *enchaineuse
+    asm: AssembleuseNASM;
+    asm.enchaineuse = *enchaineuse;
 
-    compile_cliche(*asm)
-    compile_programme(*asm, programme)
+    compile_cliche(*asm);
+    compile_programme(*asm, programme);
 
-    chemin_sortie := enchaine("compilats/", nom_de_base, ".asm")
-    chemin_objet := enchaine("compilats/", nom_de_base, ".o")
-    chemin_final := enchaine("compilats/", nom_de_base)
+    chemin_sortie := enchaine("compilats/", nom_de_base, ".asm");
+    chemin_objet := enchaine("compilats/", nom_de_base, ".o");
+    chemin_final := enchaine("compilats/", nom_de_base);
 
     saufsi écris_fichier_entier(chemin_sortie, *enchaineuse) {
-        imprimeln("Impossible d'écrire le fichier")
-        exit(1)
+        imprimeln("Impossible d'écrire le fichier");
+        exit(1);
     }
 
     saufsi exécute_commande_externe("nasm", "-g", "-f", "elf64", chemin_sortie) {
-        imprimeln("Impossible de compiler le programme")
-        exit(1)
+        imprimeln("Impossible de compiler le programme");
+        exit(1);
     }
 
     saufsi exécute_commande_externe("ld", "-m", "elf_x86_64", "-o", chemin_final, chemin_objet) {
-        imprimeln("Impossible de lier le programme")
-        exit(1)
+        imprimeln("Impossible de lier le programme");
+        exit(1);
     }
 
     si lance_programme {
-        commande := enchaine("./", chemin_final, "\0")
+        commande := enchaine("./", chemin_final, "\0");
         saufsi exécute_commande_externe(commande) {
-            imprimeln("Impossible de lancer le programme")
-            exit(1)
+            imprimeln("Impossible de lancer le programme");
+            exit(1);
         }
     }
 }
 
 compile_programme :: fonc (asm: *AssembleuseNASM, empl programme: *Programme)
 {
-    insère_label(asm, "_start")
+    insère_label(asm, "_start");
 
-    début := insts.pointeur
-    fin := insts.pointeur + insts.taille
+    début := insts.pointeur;
+    fin := insts.pointeur + insts.taille;
 
     tantque début < fin {
-        base := début comme *Instruction
-        type := base.genre comme *InfoTypeStructure
+        base := début comme *Instruction;
+        type := base.genre comme *InfoTypeStructure;
 
-        ajoute_au_tampon(asm.enchaineuse, "  ;; -- ", type.nom, " --\n")
+        ajoute_au_tampon(asm.enchaineuse, "  ;; -- ", type.nom, " --\n");
 
         discr base.genre {
             NombreEntier {
-                inst := base comme *NombreEntier
-                src := imprime_chaine("%", inst.arg)
+                inst := base comme *NombreEntier;
+                src := imprime_chaine("%", inst.arg);
                 si inst.arg >= 0x7fffffff {
-                    mov(asm, "rax", src)
-                    push(asm, "rax")
+                    mov(asm, "rax", src);
+                    push(asm, "rax");
                 }
                 sinon {
-                    push(asm, src)
+                    push(asm, src);
                 }
             }
             ChaineLittérale {
-                inst := base comme *ChaineLittérale
+                inst := base comme *ChaineLittérale;
 
-                taille_chaine := imprime_chaine("%", inst.chaine_constante.taille)
-                diffère déloge(taille_chaine)
+                taille_chaine := imprime_chaine("%", inst.chaine_constante.taille);
+                diffère déloge(taille_chaine);
 
-                push(asm, taille_chaine)
+                push(asm, taille_chaine);
 
-                adresse_chaine := imprime_chaine("DC + %", inst.chaine_constante.décalage)
-                diffère déloge(adresse_chaine)
+                adresse_chaine := imprime_chaine("DC + %", inst.chaine_constante.décalage);
+                diffère déloge(adresse_chaine);
 
-                push(asm, adresse_chaine)
+                push(asm, adresse_chaine);
             }
             Ajoute {
-                pop(asm, "rax")
-                pop(asm, "rbx")
-                add(asm, "rax", "rbx")
-                push(asm, "rax")
+                pop(asm, "rax");
+                pop(asm, "rbx");
+                add(asm, "rax", "rbx");
+                push(asm, "rax");
             }
             Soustrait {
-                pop(asm, "rax")
-                pop(asm, "rbx")
-                sub(asm, "rbx", "rax")
-                push(asm, "rbx")
+                pop(asm, "rax");
+                pop(asm, "rbx");
+                sub(asm, "rbx", "rax");
+                push(asm, "rbx");
             }
             Multiplie {
-                pop(asm, "rax")
-                pop(asm, "rbx")
-                imul(asm, "rbx", "rax")
-                push(asm, "rbx")
+                pop(asm, "rax");
+                pop(asm, "rbx");
+                imul(asm, "rbx", "rax");
+                push(asm, "rbx");
             }
             DivMod {
-                xor(asm, "rdx", "rdx")
-                pop(asm, "rbx")
-                pop(asm, "rax")
-                idiv(asm, "rbx")
-                push(asm, "rax")
-                push(asm, "rdx")
+                xor(asm, "rdx", "rdx");
+                pop(asm, "rbx");
+                pop(asm, "rax");
+                idiv(asm, "rbx");
+                push(asm, "rax");
+                push(asm, "rdx");
             }
             Égal {
-                xor(asm, "rcx", "rcx")
-                mov(asm, "rdx", "1")
-                pop(asm, "rbx")
-                pop(asm, "rax")
-                cmp(asm, "rax", "rbx")
-                cmove(asm, "rcx", "rdx")
-                push(asm, "rcx")
+                xor(asm, "rcx", "rcx");
+                mov(asm, "rdx", "1");
+                pop(asm, "rbx");
+                pop(asm, "rax");
+                cmp(asm, "rax", "rbx");
+                cmove(asm, "rcx", "rdx");
+                push(asm, "rcx");
             }
             Inégal {
-                xor(asm, "rcx", "rcx")
-                mov(asm, "rdx", "1")
-                pop(asm, "rbx")
-                pop(asm, "rax")
-                cmp(asm, "rax", "rbx")
-                cmovne(asm, "rcx", "rdx")
-                push(asm, "rcx")
+                xor(asm, "rcx", "rcx");
+                mov(asm, "rdx", "1");
+                pop(asm, "rbx");
+                pop(asm, "rax");
+                cmp(asm, "rax", "rbx");
+                cmovne(asm, "rcx", "rdx");
+                push(asm, "rcx");
             }
             Inférieur {
-                xor(asm, "rcx", "rcx")
-                mov(asm, "rdx", "1")
-                pop(asm, "rbx")
-                pop(asm, "rax")
-                cmp(asm, "rax", "rbx")
-                cmovl(asm, "rcx", "rdx")
-                push(asm, "rcx")
+                xor(asm, "rcx", "rcx");
+                mov(asm, "rdx", "1");
+                pop(asm, "rbx");
+                pop(asm, "rax");
+                cmp(asm, "rax", "rbx");
+                cmovl(asm, "rcx", "rdx");
+                push(asm, "rcx");
             }
             InférieurÉgal {
-                xor(asm, "rcx", "rcx")
-                mov(asm, "rdx", "1")
-                pop(asm, "rbx")
-                pop(asm, "rax")
-                cmp(asm, "rax", "rbx")
-                cmovle(asm, "rcx", "rdx")
-                push(asm, "rcx")
+                xor(asm, "rcx", "rcx");
+                mov(asm, "rdx", "1");
+                pop(asm, "rbx");
+                pop(asm, "rax");
+                cmp(asm, "rax", "rbx");
+                cmovle(asm, "rcx", "rdx");
+                push(asm, "rcx");
             }
             Supérieur {
-                xor(asm, "rcx", "rcx")
-                mov(asm, "rdx", "1")
-                pop(asm, "rbx")
-                pop(asm, "rax")
-                cmp(asm, "rax", "rbx")
-                cmovg(asm, "rcx", "rdx")
-                push(asm, "rcx")
+                xor(asm, "rcx", "rcx");
+                mov(asm, "rdx", "1");
+                pop(asm, "rbx");
+                pop(asm, "rax");
+                cmp(asm, "rax", "rbx");
+                cmovg(asm, "rcx", "rdx");
+                push(asm, "rcx");
             }
             SupérieurÉgal {
-                xor(asm, "rcx", "rcx")
-                mov(asm, "rdx", "1")
-                pop(asm, "rbx")
-                pop(asm, "rax")
-                cmp(asm, "rax", "rbx")
-                cmovge(asm, "rcx", "rdx")
-                push(asm, "rcx")
+                xor(asm, "rcx", "rcx");
+                mov(asm, "rdx", "1");
+                pop(asm, "rbx");
+                pop(asm, "rax");
+                cmp(asm, "rax", "rbx");
+                cmovge(asm, "rcx", "rdx");
+                push(asm, "rcx");
             }
             DécalageDroite {
-                pop(asm, "rcx")
-                pop(asm, "rax")
-                sar(asm, "rax")
-                push(asm, "rax")
+                pop(asm, "rcx");
+                pop(asm, "rax");
+                sar(asm, "rax");
+                push(asm, "rax");
             }
             DécalageGauche {
-                pop(asm, "rcx")
-                pop(asm, "rax")
-                shl(asm, "rax")
-                push(asm, "rax")
+                pop(asm, "rcx");
+                pop(asm, "rax");
+                shl(asm, "rax");
+                push(asm, "rax");
             }
             EtBinaire {
-                pop(asm, "rax")
-                pop(asm, "rbx")
-                and(asm, "rbx", "rax")
-                push(asm, "rbx")
+                pop(asm, "rax");
+                pop(asm, "rbx");
+                and(asm, "rbx", "rax");
+                push(asm, "rbx");
             }
             OuInclusif {
-                pop(asm, "rax")
-                pop(asm, "rbx")
-                or(asm, "rbx", "rax")
-                push(asm, "rbx")
+                pop(asm, "rax");
+                pop(asm, "rbx");
+                or(asm, "rbx", "rax");
+                push(asm, "rbx");
             }
             OuExclusif {
-                pop(asm, "rax")
-                pop(asm, "rbx")
-                xor(asm, "rbx", "rax")
-                push(asm, "rbx")
+                pop(asm, "rax");
+                pop(asm, "rbx");
+                xor(asm, "rbx", "rax");
+                push(asm, "rbx");
             }
             Cliche {
-                pop(asm, "rdi")
-                call(asm, "cliche")
+                pop(asm, "rdi");
+                call(asm, "cliche");
             }
             Duplique {
-                pop(asm, "rax")
-                push(asm, "rax")
-                push(asm, "rax")
+                pop(asm, "rax");
+                push(asm, "rax");
+                push(asm, "rax");
             }
             Permute {
-                pop(asm, "rax")
-                pop(asm, "rbx")
-                push(asm, "rax")
-                push(asm, "rbx")
+                pop(asm, "rax");
+                pop(asm, "rbx");
+                push(asm, "rax");
+                push(asm, "rbx");
             }
             Enjambe {
-                pop(asm, "rax")
-                pop(asm, "rbx")
-                push(asm, "rbx")
-                push(asm, "rax")
-                push(asm, "rbx")
+                pop(asm, "rax");
+                pop(asm, "rbx");
+                push(asm, "rbx");
+                push(asm, "rax");
+                push(asm, "rbx");
             }
             Si {
-                inst := base comme *Si
-                label := imprime_chaine(".fin_%", inst.cible)
-                diffère déloge(label)
+                inst := base comme *Si;
+                label := imprime_chaine(".fin_%", inst.cible);
+                diffère déloge(label);
 
-                pop(asm, "rax")
-                test(asm, "rax", "rax")
-                jz(asm, label)
+                pop(asm, "rax");
+                test(asm, "rax", "rax");
+                jz(asm, label);
             }
             Sinon {
-                inst := base comme *Sinon
+                inst := base comme *Sinon;
 
-                label := imprime_chaine(".fin_%", inst.cible)
-                diffère déloge(label)
+                label := imprime_chaine(".fin_%", inst.cible);
+                diffère déloge(label);
 
-                jmp(asm, label)
+                jmp(asm, label);
 
-                label_suivant := imprime_chaine(".fin_%", (inst + 1))
-                diffère déloge(label_suivant)
+                label_suivant := imprime_chaine(".fin_%", (inst + 1));
+                diffère déloge(label_suivant);
 
-                insère_label(asm, label_suivant)
+                insère_label(asm, label_suivant);
             }
             Fin {
-                inst := base comme *Fin
+                inst := base comme *Fin;
                 si inst.cible {
-                    label := imprime_chaine(".cible_%", inst.cible)
-                    diffère déloge(label)
+                    label := imprime_chaine(".cible_%", inst.cible);
+                    diffère déloge(label);
 
-                    jmp(asm, label)
+                    jmp(asm, label);
 
-                    label_suivant := imprime_chaine(".fin_%", (inst + 1))
-                    diffère déloge(label_suivant)
+                    label_suivant := imprime_chaine(".fin_%", (inst + 1));
+                    diffère déloge(label_suivant);
 
-                    insère_label(asm, label_suivant)
+                    insère_label(asm, label_suivant);
                 }
                 sinon {
-                    label := imprime_chaine(".fin_%", base)
-                    diffère déloge(label)
+                    label := imprime_chaine(".fin_%", base);
+                    diffère déloge(label);
 
-                    insère_label(asm, label)
+                    insère_label(asm, label);
                 }
             }
             Tantque {
-                label := imprime_chaine(".cible_%", base)
-                diffère déloge(label)
+                label := imprime_chaine(".cible_%", base);
+                diffère déloge(label);
 
-                insère_label(asm, label)
+                insère_label(asm, label);
             }
             Fais {
-                inst := base comme *Fais
-                label := imprime_chaine(".fin_%", inst.cible)
-                diffère déloge(label)
+                inst := base comme *Fais;
+                label := imprime_chaine(".fin_%", inst.cible);
+                diffère déloge(label);
 
-                pop(asm, "rax")
-                test(asm, "rax", "rax")
-                jz(asm, label)
+                pop(asm, "rax");
+                test(asm, "rax", "rax");
+                jz(asm, label);
             }
             Mem {
-                push(asm, "mem")
+                push(asm, "mem");
             }
             LisMem {
-                pop(asm, "rax")
-                xor(asm, "rbx", "rbx")
-                mov(asm, "bl", "[rax]")
-                push(asm, "rbx")
+                pop(asm, "rax");
+                xor(asm, "rbx", "rbx");
+                mov(asm, "bl", "[rax]");
+                push(asm, "rbx");
             }
             ÉcrisMem {
-                pop(asm, "rbx")
-                pop(asm, "rax")
-                mov(asm, "[rax]", "bl")
+                pop(asm, "rbx");
+                pop(asm, "rax");
+                mov(asm, "[rax]", "bl");
             }
             AppelSys1 {
-                pop(asm, "rax")
-                pop(asm, "rdi")
-                syscall(asm)
-                push(asm, "rax")
+                pop(asm, "rax");
+                pop(asm, "rdi");
+                syscall(asm);
+                push(asm, "rax");
             }
             AppelSys2 {
-                pop(asm, "rax")
-                pop(asm, "rdi")
-                pop(asm, "rsi")
-                syscall(asm)
-                push(asm, "rax")
+                pop(asm, "rax");
+                pop(asm, "rdi");
+                pop(asm, "rsi");
+                syscall(asm);
+                push(asm, "rax");
             }
             AppelSys3 {
-                pop(asm, "rax")
-                pop(asm, "rdi")
-                pop(asm, "rsi")
-                pop(asm, "rdx")
-                syscall(asm)
-                push(asm, "rax")
+                pop(asm, "rax");
+                pop(asm, "rdi");
+                pop(asm, "rsi");
+                pop(asm, "rdx");
+                syscall(asm);
+                push(asm, "rax");
             }
             Lâche {
-                pop(asm, "rax")
+                pop(asm, "rax");
             }
             sinon {
-                panique("Instruction non-géré : %", type.nom)
+                panique("Instruction non-géré : %", type.nom);
             }
         }
 
-        début += type.taille_en_octet
+        début += type.taille_en_octet;
     }
 
-    mov(asm, "rax", "SYS_exit")
-    mov(asm, "rdi", "0")
-    syscall(asm)
+    mov(asm, "rax", "SYS_exit");
+    mov(asm, "rdi", "0");
+    syscall(asm);
 }
 
 /* Fonction utilisée pour implémenter l'instruction "cliche". */
 compile_cliche :: fonc (asm: *AssembleuseNASM)
 {
-    insère_label(asm, "cliche")
-    mov(asm, "r8", "7378697629483820647")
-    sub(asm, "rsp", "40")
-    mov(asm, "BYTE [rsp+31]", "10")
-    lea(asm, "rcx", "[rsp+30]")
-    insère_label(asm, ".L2")
-    mov(asm, "rax", "rdi")
-    mov(asm, "rsi", "rcx")
-    sub(asm, "rcx", "1")
-    imul(asm, "r8")
-    mov(asm, "rax", "rdi")
-    sar(asm, "rax", "63")
-    sar(asm, "rdx", "2")
-    sub(asm, "rdx", "rax")
-    lea(asm, "rax", "[rdx+rdx*4]")
-    add(asm, "rax", "rax")
-    sub(asm, "rdi", "rax")
-    add(asm, "edi", "48")
-    mov(asm, "BYTE [rcx+1]", "dil")
-    mov(asm, "rdi", "rdx")
-    test(asm, "rdx", "rdx")
-    jne(asm, ".L2")
-    lea(asm, "rdx", "[rsp+32]")
-    mov(asm, "edi", "1")
-    sub(asm, "rdx", "rsi")
-    mov(asm, "rax", "1")
-    syscall(asm)
-    add(asm, "rsp", "40")
-    ret(asm)
+    insère_label(asm, "cliche");
+    mov(asm, "r8", "7378697629483820647");
+    sub(asm, "rsp", "40");
+    mov(asm, "BYTE [rsp+31]", "10");
+    lea(asm, "rcx", "[rsp+30]");
+    insère_label(asm, ".L2");
+    mov(asm, "rax", "rdi");
+    mov(asm, "rsi", "rcx");
+    sub(asm, "rcx", "1");
+    imul(asm, "r8");
+    mov(asm, "rax", "rdi");
+    sar(asm, "rax", "63");
+    sar(asm, "rdx", "2");
+    sub(asm, "rdx", "rax");
+    lea(asm, "rax", "[rdx+rdx*4]");
+    add(asm, "rax", "rax");
+    sub(asm, "rdi", "rax");
+    add(asm, "edi", "48");
+    mov(asm, "BYTE [rcx+1]", "dil");
+    mov(asm, "rdi", "rdx");
+    test(asm, "rdx", "rdx");
+    jne(asm, ".L2");
+    lea(asm, "rdx", "[rsp+32]");
+    mov(asm, "edi", "1");
+    sub(asm, "rdx", "rsi");
+    mov(asm, "rax", "1");
+    syscall(asm);
+    add(asm, "rsp", "40");
+    ret(asm);
 }
 
 /** \} */
@@ -2239,172 +2239,172 @@ compile_cliche :: fonc (asm: *AssembleuseNASM)
  * \{ */
 
 AssembleuseNASM :: struct {
-    enchaineuse: *Enchaineuse
+    enchaineuse: *Enchaineuse;
 }
 
 insère_label :: fonc (empl asm: *AssembleuseNASM, label: chaine)
 {
-    ajoute_au_tampon(enchaineuse, label, ":\n")
+    ajoute_au_tampon(enchaineuse, label, ":\n");
 }
 
 add :: fonc (asm: *AssembleuseNASM, dst: chaine, src: chaine)
 {
-    émets_instruction(asm, #nom_de_cette_fonction, dst, src)
+    émets_instruction(asm, #nom_de_cette_fonction, dst, src);
 }
 
 sub :: fonc (asm: *AssembleuseNASM, dst: chaine, src: chaine)
 {
-    émets_instruction(asm, #nom_de_cette_fonction, dst, src)
+    émets_instruction(asm, #nom_de_cette_fonction, dst, src);
 }
 
 imul :: fonc (asm: *AssembleuseNASM, dst: chaine)
 {
-    émets_instruction(asm, #nom_de_cette_fonction, dst)
+    émets_instruction(asm, #nom_de_cette_fonction, dst);
 }
 
 imul :: fonc (asm: *AssembleuseNASM, dst: chaine, src: chaine)
 {
-    émets_instruction(asm, #nom_de_cette_fonction, dst, src)
+    émets_instruction(asm, #nom_de_cette_fonction, dst, src);
 }
 
 idiv :: fonc (asm: *AssembleuseNASM, src: chaine)
 {
-    émets_instruction(asm, #nom_de_cette_fonction, src)
+    émets_instruction(asm, #nom_de_cette_fonction, src);
 }
 
 and :: fonc (asm: *AssembleuseNASM, dst: chaine, src: chaine)
 {
-    émets_instruction(asm, #nom_de_cette_fonction, dst, src)
+    émets_instruction(asm, #nom_de_cette_fonction, dst, src);
 }
 
 or :: fonc (asm: *AssembleuseNASM, dst: chaine, src: chaine)
 {
-    émets_instruction(asm, #nom_de_cette_fonction, dst, src)
+    émets_instruction(asm, #nom_de_cette_fonction, dst, src);
 }
 
 xor :: fonc (asm: *AssembleuseNASM, dst: chaine, src: chaine)
 {
-    émets_instruction(asm, #nom_de_cette_fonction, dst, src)
+    émets_instruction(asm, #nom_de_cette_fonction, dst, src);
 }
 
 sar :: fonc (asm: *AssembleuseNASM, dst: chaine)
 {
-    émets_instruction(asm, #nom_de_cette_fonction, dst, "cl")
+    émets_instruction(asm, #nom_de_cette_fonction, dst, "cl");
 }
 
 sar :: fonc (asm: *AssembleuseNASM, dst: chaine, imm: chaine)
 {
-    émets_instruction(asm, #nom_de_cette_fonction, dst, imm)
+    émets_instruction(asm, #nom_de_cette_fonction, dst, imm);
 }
 
 shl :: fonc (asm: *AssembleuseNASM, dst: chaine)
 {
-    émets_instruction(asm, #nom_de_cette_fonction, dst, "cl")
+    émets_instruction(asm, #nom_de_cette_fonction, dst, "cl");
 }
 
 mov :: fonc (asm: *AssembleuseNASM, dst: chaine, src: chaine)
 {
-    émets_instruction(asm, #nom_de_cette_fonction, dst, src)
+    émets_instruction(asm, #nom_de_cette_fonction, dst, src);
 }
 
 lea :: fonc (asm: *AssembleuseNASM, dst: chaine, src: chaine)
 {
-    émets_instruction(asm, #nom_de_cette_fonction, dst, src)
+    émets_instruction(asm, #nom_de_cette_fonction, dst, src);
 }
 
 pop :: fonc (asm: *AssembleuseNASM, dst: chaine)
 {
-    émets_instruction(asm, #nom_de_cette_fonction, dst)
+    émets_instruction(asm, #nom_de_cette_fonction, dst);
 }
 
 push :: fonc (asm: *AssembleuseNASM, src: chaine)
 {
-    émets_instruction(asm, #nom_de_cette_fonction, src)
+    émets_instruction(asm, #nom_de_cette_fonction, src);
 }
 
 cmp :: fonc (asm: *AssembleuseNASM, dst: chaine, src: chaine)
 {
-    émets_instruction(asm, #nom_de_cette_fonction, dst, src)
+    émets_instruction(asm, #nom_de_cette_fonction, dst, src);
 }
 
 test :: fonc (asm: *AssembleuseNASM, dst: chaine, src: chaine)
 {
-    émets_instruction(asm, #nom_de_cette_fonction, dst, src)
+    émets_instruction(asm, #nom_de_cette_fonction, dst, src);
 }
 
 cmove :: fonc (asm: *AssembleuseNASM, dst: chaine, src: chaine)
 {
-    émets_instruction(asm, #nom_de_cette_fonction, dst, src)
+    émets_instruction(asm, #nom_de_cette_fonction, dst, src);
 }
 
 cmovne :: fonc (asm: *AssembleuseNASM, dst: chaine, src: chaine)
 {
-    émets_instruction(asm, #nom_de_cette_fonction, dst, src)
+    émets_instruction(asm, #nom_de_cette_fonction, dst, src);
 }
 
 cmovg :: fonc (asm: *AssembleuseNASM, dst: chaine, src: chaine)
 {
-    émets_instruction(asm, #nom_de_cette_fonction, dst, src)
+    émets_instruction(asm, #nom_de_cette_fonction, dst, src);
 }
 
 cmovge :: fonc (asm: *AssembleuseNASM, dst: chaine, src: chaine)
 {
-    émets_instruction(asm, #nom_de_cette_fonction, dst, src)
+    émets_instruction(asm, #nom_de_cette_fonction, dst, src);
 }
 
 cmovl :: fonc (asm: *AssembleuseNASM, dst: chaine, src: chaine)
 {
-    émets_instruction(asm, #nom_de_cette_fonction, dst, src)
+    émets_instruction(asm, #nom_de_cette_fonction, dst, src);
 }
 
 cmovle :: fonc (asm: *AssembleuseNASM, dst: chaine, src: chaine)
 {
-    émets_instruction(asm, #nom_de_cette_fonction, dst, src)
+    émets_instruction(asm, #nom_de_cette_fonction, dst, src);
 }
 
 jmp :: fonc (asm: *AssembleuseNASM, dst: chaine)
 {
-    émets_instruction(asm, #nom_de_cette_fonction, dst)
+    émets_instruction(asm, #nom_de_cette_fonction, dst);
 }
 
 jz :: fonc (asm: *AssembleuseNASM, dst: chaine)
 {
-    émets_instruction(asm, #nom_de_cette_fonction, dst)
+    émets_instruction(asm, #nom_de_cette_fonction, dst);
 }
 
 jne :: fonc (asm: *AssembleuseNASM, dst: chaine)
 {
-    émets_instruction(asm, #nom_de_cette_fonction, dst)
+    émets_instruction(asm, #nom_de_cette_fonction, dst);
 }
 
 call :: fonc (asm: *AssembleuseNASM, dst: chaine)
 {
-    émets_instruction(asm, #nom_de_cette_fonction, dst)
+    émets_instruction(asm, #nom_de_cette_fonction, dst);
 }
 
 ret :: fonc (asm: *AssembleuseNASM)
 {
-    émets_instruction(asm, #nom_de_cette_fonction)
+    émets_instruction(asm, #nom_de_cette_fonction);
 }
 
 syscall :: fonc (asm: *AssembleuseNASM)
 {
-    émets_instruction(asm, #nom_de_cette_fonction)
+    émets_instruction(asm, #nom_de_cette_fonction);
 }
 
 émets_instruction :: fonc (empl asm: *AssembleuseNASM, nom: chaine)
 {
-    ajoute_au_tampon(enchaineuse, "  ", nom, "\n")
+    ajoute_au_tampon(enchaineuse, "  ", nom, "\n");
 }
 
 émets_instruction :: fonc (empl asm: *AssembleuseNASM, nom: chaine, op1: chaine)
 {
-    ajoute_au_tampon(enchaineuse, "  ", nom, " ", op1, "\n")
+    ajoute_au_tampon(enchaineuse, "  ", nom, " ", op1, "\n");
 }
 
 émets_instruction :: fonc (empl asm: *AssembleuseNASM, nom: chaine, op1: chaine, op2: chaine)
 {
-    ajoute_au_tampon(enchaineuse, "  ", nom, " ", op1, ", ", op2, "\n")
+    ajoute_au_tampon(enchaineuse, "  ", nom, " ", op1, ", ", op2, "\n");
 }
 
 /** \} */

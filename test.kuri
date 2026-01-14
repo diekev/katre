@@ -1,177 +1,177 @@
-importe Chaine
-importe Fondation
-importe LigneDeCommande
-importe Processus
-importe SysFichier
-importe Triage
+importe Chaine;
+importe Fondation;
+importe LigneDeCommande;
+importe Processus;
+importe SysFichier;
+importe Triage;
 
 Commandes :: struct {
-    recorde: bool
-    dossier: chaine
+    recorde: bool;
+    dossier: chaine;
 }
 
 principale :: fonc ()
 {
-    succès, args, _ := parse_ligne_de_commande(Commandes)
+    succès, args, _ := parse_ligne_de_commande(Commandes);
     saufsi succès {
-        exit(1)
+        exit(1);
     }
 
-    dossier_entrée := "tests/"
+    dossier_entrée := "tests/";
     si args.dossier {
-        dossier_entrée = args.dossier
+        dossier_entrée = args.dossier;
     }
 
-    chemins_fichiers := donne_chemins_du_dossier(dossier_entrée, ".katre")
-    diffère déloge_tableau_et_ses_éléments(chemins_fichiers)
+    chemins_fichiers := donne_chemins_du_dossier(dossier_entrée, ".katre");
+    diffère déloge_tableau_et_ses_éléments(chemins_fichiers);
 
-    tri_rapide(chemins_fichiers, compare_chaine)
+    tri_rapide(chemins_fichiers, compare_chaine);
 
-    chemins_sorties: [..]chaine
-    diffère déloge_tableau_et_ses_éléments(chemins_sorties)
+    chemins_sorties: [..]chaine;
+    diffère déloge_tableau_et_ses_éléments(chemins_sorties);
 
     pour chemins_fichiers {
-        chm := CheminFichier(it)
-        chemin_sortie := imprime_chaine("%/%.attendu", dossier_entrée, nom_fichier(chm))
-        tableau_ajoute(*chemins_sorties, chemin_sortie)
+        chm := CheminFichier(it);
+        chemin_sortie := imprime_chaine("%/%.attendu", dossier_entrée, nom_fichier(chm));
+        tableau_ajoute(*chemins_sorties, chemin_sortie);
     }
 
     si args.recorde {
         pour chemins_fichiers {
             saufsi exécute_commande_externe("./katre", "-s", it, ">", chemins_sorties[indice_it]) {
-                imprimeln("Impossible de compiler le code")
+                imprimeln("Impossible de compiler le code");
             }
         }
-        exit(0)
+        exit(0);
     }
 
-    chemin_tmp := "/tmp/tests.katre"
+    chemin_tmp := "/tmp/tests.katre";
 
-    tests_échouants: [..]TestÉchouant
+    tests_échouants: [..]TestÉchouant;
     diffère {
         pour tests_échouants {
-            déloge(it.contenu_voulu)
-            déloge(it.contenu_obtenu)
+            déloge(it.contenu_voulu);
+            déloge(it.contenu_obtenu);
         }
-        déloge(tests_échouants)
+        déloge(tests_échouants);
     }
 
     pour chemins_fichiers {
         si exécute_commande_externe("./katre", "-s", it, ">", chemin_tmp) {
-            compare_fichiers(it, chemins_sorties[indice_it], chemin_tmp, vrai, *tests_échouants)
+            compare_fichiers(it, chemins_sorties[indice_it], chemin_tmp, vrai, *tests_échouants);
         }
         sinon {
-            test_échouant := tableau_ajoute_élément(*tests_échouants)
-            test_échouant.chemin_fichier = it
-            test_échouant.simulation_anormale = vrai
+            test_échouant := tableau_ajoute_élément(*tests_échouants);
+            test_échouant.chemin_fichier = it;
+            test_échouant.simulation_anormale = vrai;
         }
 
         si exécute_commande_externe("./katre", "-c", it, ">", "/dev/null") {
-            programme := imprime_chaine("./compilats/%", nom_fichier(CheminFichier(it)))
-            diffère déloge(programme)
+            programme := imprime_chaine("./compilats/%", nom_fichier(CheminFichier(it)));
+            diffère déloge(programme);
 
             si exécute_commande_externe(programme, ">", chemin_tmp) {
-                compare_fichiers(it, chemins_sorties[indice_it], chemin_tmp, faux, *tests_échouants)
+                compare_fichiers(it, chemins_sorties[indice_it], chemin_tmp, faux, *tests_échouants);
             }
             sinon {
-                test_échouant := tableau_ajoute_élément(*tests_échouants)
-                test_échouant.chemin_fichier = it
-                test_échouant.exécution_anormale = vrai
+                test_échouant := tableau_ajoute_élément(*tests_échouants);
+                test_échouant.chemin_fichier = it;
+                test_échouant.exécution_anormale = vrai;
             }
         }
         sinon {
-            test_échouant := tableau_ajoute_élément(*tests_échouants)
-            test_échouant.chemin_fichier = it
-            test_échouant.compilation_anormale = vrai
+            test_échouant := tableau_ajoute_élément(*tests_échouants);
+            test_échouant.chemin_fichier = it;
+            test_échouant.compilation_anormale = vrai;
         }
     }
 
     pour tests_échouants {
-        imprime("[ \x1b[31mÉCHEC\x1b[37m ] : %\n", it.chemin_fichier)
-        imprimeln("")
+        imprime("[ \x1b[31mÉCHEC\x1b[37m ] : %\n", it.chemin_fichier);
+        imprimeln("");
 
         si it.compilation_anormale {
-            imprimeln("   Compilation anormale")
+            imprimeln("   Compilation anormale");
         }
         sinon si it.exécution_anormale {
-            imprimeln("   Exécution anormale")
+            imprimeln("   Exécution anormale");
         }
         sinon si it.simulation_anormale {
-            imprimeln("   Simulation anormale")
+            imprimeln("   Simulation anormale");
         }
         sinon {
             si it.est_pour_simulation {
-                imprimeln("\nLa simulation du code n'a pas retournée le résultat souhaité\n")
+                imprimeln("\nLa simulation du code n'a pas retournée le résultat souhaité\n");
             }
             sinon {
-                imprimeln("\nL'exécution du code n'a pas retournée le résultat souhaité\n")
+                imprimeln("\nL'exécution du code n'a pas retournée le résultat souhaité\n");
             }
 
-            imprimeln("   Voulu\n")
-            imprimeln("%", it.contenu_voulu)
-            imprimeln("")
+            imprimeln("   Voulu\n");
+            imprimeln("%", it.contenu_voulu);
+            imprimeln("");
 
-            imprimeln("   Obtenu\n")
-            imprimeln("%", it.contenu_obtenu)
-            imprimeln("")
+            imprimeln("   Obtenu\n");
+            imprimeln("%", it.contenu_obtenu);
+            imprimeln("");
         }
 
-        imprimeln("")
+        imprimeln("");
     }
 
     si tests_échouants {
-        imprimeln("[ \x1b[31mÉCHEC\x1b[37m ]")
+        imprimeln("[ \x1b[31mÉCHEC\x1b[37m ]");
     }
     sinon {
-        imprime("[ \x1b[32mPASSE\x1b[37m ]\n")
+        imprime("[ \x1b[32mPASSE\x1b[37m ]\n");
     }
 }
 
 TestÉchouant :: struct {
-    chemin_fichier: chaine
-    contenu_voulu: chaine
-    contenu_obtenu: chaine
+    chemin_fichier: chaine;
+    contenu_voulu: chaine;
+    contenu_obtenu: chaine;
 
-    simulation_anormale: bool
-    compilation_anormale: bool
-    exécution_anormale: bool
-    est_pour_simulation: bool
+    simulation_anormale: bool;
+    compilation_anormale: bool;
+    exécution_anormale: bool;
+    est_pour_simulation: bool;
 }
 
 compare_fichiers :: fonc (chemin_fichier: chaine, chemin_voulu: chaine, chemin_obtenu: chaine, pour_simulation: bool, tests_échouants: *[..]TestÉchouant)
 {
-    succès_voulu, contenu_voulu := contenu_fichier_texte(chemin_voulu)
+    succès_voulu, contenu_voulu := contenu_fichier_texte(chemin_voulu);
     saufsi succès_voulu {
-        exit(1)
+        exit(1);
     }
-    diffère déloge(contenu_voulu)
+    diffère déloge(contenu_voulu);
 
-    succès_obtenu, contenu_obtenu := contenu_fichier_texte(chemin_obtenu)
+    succès_obtenu, contenu_obtenu := contenu_fichier_texte(chemin_obtenu);
     saufsi succès_obtenu {
-        exit(1)
+        exit(1);
     }
-    diffère déloge(contenu_obtenu)
+    diffère déloge(contenu_obtenu);
 
     si contenu_voulu == contenu_obtenu {
-        retourne
+        retourne;
     }
 
-    test_échouant := tableau_ajoute_élément(tests_échouants)
-    test_échouant.chemin_fichier = chemin_fichier
-    test_échouant.contenu_voulu = copie_chaine(contenu_voulu)
-    test_échouant.contenu_obtenu = copie_chaine(contenu_obtenu)
-    test_échouant.est_pour_simulation = pour_simulation
+    test_échouant := tableau_ajoute_élément(tests_échouants);
+    test_échouant.chemin_fichier = chemin_fichier;
+    test_échouant.contenu_voulu = copie_chaine(contenu_voulu);
+    test_échouant.contenu_obtenu = copie_chaine(contenu_obtenu);
+    test_échouant.est_pour_simulation = pour_simulation;
 }
 
 donne_chemins_du_dossier :: fonc (dossier: chaine, extension_: chaine) -> [..]chaine
 {
-    résultat: [..]chaine
+    résultat: [..]chaine;
 
     pour ExploratriceFichier(CheminFichier(dossier)) {
         si extension_ == extension(it) {
-            tableau_ajoute(*résultat, copie_chaine(it.chn))
+            tableau_ajoute(*résultat, copie_chaine(it.chn));
         }
     }
 
-    retourne résultat
+    retourne résultat;
 }
