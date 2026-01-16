@@ -294,7 +294,7 @@ rapporte_diagnostique :: fonc (compilatrice: *Compilatrice, type: TypeDiagnostiq
         }
     }
 
-    donne_fichier_pour_lexème :: fonc (compilatrice: *Compilatrice, lexème: Lexème) -> *FichierSource;
+    donne_fichier_pour_lexème :: fonc (compilatrice: *Compilatrice, lexème: Lexème) -> *FichierSource
     {
         // À FAIRE : stocke le fichier dans le lexème
         si lexème.type == TypeLexème.FinDeFichier {
@@ -1687,37 +1687,37 @@ simule_instructions :: fonc (simulatrice: *Simulatrice, insts: []octet)
             Égal {
                 a := dépile(simulatrice);
                 b := dépile(simulatrice);
-                résultat := si a == b { 1 } sinon { 0 }
+                résultat := si a == b { 1; } sinon { 0; };
                 empile(simulatrice, résultat);
             }
             Inégal {
                 a := dépile(simulatrice);
                 b := dépile(simulatrice);
-                résultat := si a != b { 1 } sinon { 0 }
+                résultat := si a != b { 1; } sinon { 0; };
                 empile(simulatrice, résultat);
             }
             Inférieur {
                 a := dépile(simulatrice);
                 b := dépile(simulatrice);
-                résultat := si b < a { 1 } sinon { 0 }
+                résultat := si b < a { 1; } sinon { 0; };
                 empile(simulatrice, résultat);
             }
             InférieurÉgal {
                 a := dépile(simulatrice);
                 b := dépile(simulatrice);
-                résultat := si b <= a { 1 } sinon { 0 }
+                résultat := si b <= a { 1; } sinon { 0; };
                 empile(simulatrice, résultat);
             }
             Supérieur {
                 a := dépile(simulatrice);
                 b := dépile(simulatrice);
-                résultat := si b > a { 1 } sinon { 0 }
+                résultat := si b > a { 1; } sinon { 0; };
                 empile(simulatrice, résultat);
             }
             SupérieurÉgal {
                 a := dépile(simulatrice);
                 b := dépile(simulatrice);
-                résultat := si b >= a { 1 } sinon { 0 }
+                résultat := si b >= a { 1; } sinon { 0; };
                 empile(simulatrice, résultat);
             }
             DécalageDroite {
